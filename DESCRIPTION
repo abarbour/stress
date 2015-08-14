@@ -1,0 +1,32 @@
+Package: stress
+Type: Package
+Title: Tools for Working with Stress Inversion Results
+Version: 0.0.9999
+Date: 2015-08-14
+Author: Andrew J Barbour
+Maintainer: Andrew J Barbour <andy.barbour@gmail.com>
+Description: Tools for working with inversions of focal mechanisms for stress state
+LazyData: TRUE
+License: GPL (>= 2)
+URL: https://github.com/abarbour/stress
+BugReports: https://github.com/abarbour/stress/issues
+Depends:
+    utils,
+    graphics,
+    stats,
+    grDevices
+Suggests:
+    plyr,
+    dplyr,
+    knitr,
+    raster,
+    rasterVis,
+    reshape2,
+    testthat,
+    TeachingDemos,
+    RColorBrewer
+Imports:
+    Rcpp (>= 0.12.0)
+VignetteBuilder: knitr
+LinkingTo:
+    Rcpp

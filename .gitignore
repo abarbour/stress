@@ -1,4 +1,10 @@
+# Rcpp stuff
+src/*.o
+src/*.so
+src/*.dll
+
 # History files
+.RData
 .Rhistory
 .Rapp.history
 
@@ -11,3 +17,4 @@
 # produced vignettes
 vignettes/*.html
 vignettes/*.pdf
+.Rproj.user
