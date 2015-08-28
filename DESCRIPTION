@@ -2,7 +2,7 @@ Package: stress
 Type: Package
 Title: Tools for Working with Stress Inversion Results
 Version: 0.0.9999
-Date: 2015-08-14
+Date: 2015-08-28
 Author: Andrew J Barbour
 Maintainer: Andrew J Barbour <andy.barbour@gmail.com>
 Description: Tools for working with inversions of focal mechanisms for stress state
@@ -16,7 +16,6 @@ Depends:
     stats,
     grDevices
 Suggests:
-    plyr,
     dplyr,
     knitr,
     raster,
@@ -27,6 +26,7 @@ Suggests:
     RColorBrewer
 Imports:
     Rcpp (>= 0.12.0)
-VignetteBuilder: knitr
+VignetteBuilder:
+    knitr
 LinkingTo:
     Rcpp

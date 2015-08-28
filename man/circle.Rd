@@ -4,12 +4,15 @@
 \alias{circle}
 \title{Return a unit circle}
 \usage{
-circle(dtheta = 1, origin = 0)
+circle(dtheta = 1, origin = 0, n)
 }
 \arguments{
 \item{dtheta}{numeric; the disretization in degrees.}
 
 \item{origin}{numeric; where the first point begins, in degrees}
+
+\item{n}{numeric; an optional way to specify the number of points from
+the origin to the origin + 360; setting this negates \code{dtheta}}
 }
 \description{
 Return a unit circle
