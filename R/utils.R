@@ -71,3 +71,19 @@ shape_factor <- function(S1, S2, S3, check.order=TRUE, stress.ratio=FALSE){
     phi
   }
 }
+
+#' Differential stress from b-values based on Scholz's regression
+#'
+#' @details
+#' Differential stress (S1 - S3) may be inversely proportional to b-value Scholz (2015).
+#'
+#' @export
+#' @param b numeric; earthquakes b-value
+#' @examples
+#' bvalue_stress() # 1.0 characteristic of So CA: 192 MPa
+#' bvalue_stress(c(0.85,0.90,1.0))
+bvalue_stress <- function(b=1.0){
+  ds <- (1.23 - b) / 0.0012
+  attr(ds, 'units') <- 'MPa'
+  return(ds)
+}
