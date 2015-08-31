@@ -64,7 +64,7 @@ shape_factor <- function(S1, S2, S3, check.order=TRUE, stress.ratio=FALSE){
       return(which(!ok))
     }
   }
-  phi <- (S[, 2] - S[, 3])/(S[, 1] - S[, 3])
+  phi <- (S[, 2] - S[, 3]) / (S[, 1] - S[, 3])
   if (stress.ratio){
     1 - phi
   } else {
