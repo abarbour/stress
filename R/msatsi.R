@@ -1,8 +1,18 @@
 #' MSATSI output readers
+#'
+#' MSATSI has a standardized set of output files.  These functions
+#' can be used to read-in certain files and create associated
+#' objects.
+#'
 #' @name read_msatsi
 NULL
 
 #' @rdname read_msatsi
+#' @param fi character; the filename
+#' @param x object
+#' @param ... additional parameters, usually passed to
+#' \code{\link{read.table}} or
+#' \code{\link{print}}
 #' @export
 read.slboot_trpl <- function(fi, ...){
   # 0D-2D: X Y Phi Tr1 Pl1 Tr2 Pl2 Tr3 Pl3
@@ -48,8 +58,13 @@ print.slboot_tensor <- function(x, ...){
   D <- rbind(e,n,u)
 }
 
+#' Return the relative stress magnitudes and directions
 #' @export
+#' @seealso \code{\link{read_msatsi}}
 relative_stress <- function(x, ...) UseMethod('relative_stress')
+
+#' @rdname relative_stress
+#' @export
 relative_stress.slboot_tensor <- function(x, ...){
   .local <- function(s, ...){
     eigS <- eigen(.deviatoric_tensor(s, ...), symmetric=TRUE)

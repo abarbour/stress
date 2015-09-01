@@ -16,7 +16,18 @@ read.slboot_tensor(fi, ...)
 
 \method{print}{slboot_tensor}(x, ...)
 }
+\arguments{
+\item{fi}{character; the filename}
+
+\item{...}{additional parameters, usually passed to
+\code{\link{read.table}} or
+\code{\link{print}}}
+
+\item{x}{object}
+}
 \description{
-MSATSI output readers
+MSATSI has a standardized set of output files.  These functions
+can be used to read-in certain files and create associated
+objects.
 }
 

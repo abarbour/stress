@@ -2,6 +2,7 @@
 
 S3method(print,slboot_tensor)
 S3method(print,slboot_trpl)
+S3method(relative_stress,slboot_tensor)
 export(TP)
 export(bvalue_stress)
 export(circle)
