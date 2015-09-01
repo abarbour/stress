@@ -8,6 +8,7 @@
 \alias{print.msatsi_slboot_trpl}
 \alias{print.msatsi_summary}
 \alias{print.msatsi_summary_ext}
+\alias{read.msatsi_mat}
 \alias{read.msatsi_sat}
 \alias{read.msatsi_slboot_tensor}
 \alias{read.msatsi_slboot_trpl}
@@ -18,6 +19,10 @@
 \title{MSATSI output readers}
 \usage{
 read.msatsi_slboot_trpl(fi, ...)
+
+\method{print}{msatsi_slboot_trpl}(x, ...)
+
+read.msatsi_mat(fi, ...)
 
 \method{print}{msatsi_slboot_trpl}(x, ...)
 
@@ -48,7 +53,8 @@ read.msatsi_sat(fi, ...)
 
 \item{...}{additional parameters, usually passed to
 \code{\link{read.table}},
-\code{\link{print}}, or
+\code{\link{print}},
+\code{\link[R.matlab]{readMat}}, or
 \code{\link{plot}}}
 
 \item{x,object}{an object}

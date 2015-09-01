@@ -12,7 +12,8 @@ NULL
 #' @param x,object an object
 #' @param ... additional parameters, usually passed to
 #' \code{\link{read.table}},
-#' \code{\link{print}}, or
+#' \code{\link{print}},
+#' \code{\link[R.matlab]{readMat}}, or
 #' \code{\link{plot}}
 #' @export
 read.msatsi_slboot_trpl <- function(fi, ...){
@@ -22,6 +23,66 @@ read.msatsi_slboot_trpl <- function(fi, ...){
   class(dat) <- c('msatsi_slboot_trpl','data.frame')
   attr(dat, 'is.3D') <- ncol(dat) > 9
   return(dat)
+}
+
+#' @rdname read_msatsi
+#' @export
+print.msatsi_slboot_trpl <- function(x, ...){
+  message("msatsi slboot trpl output:\n3D/4D: ", attr(x, 'is.3D'))
+  print(dplyr::tbl_df(x), ...)
+}
+
+#' @rdname read_msatsi
+#' @export
+read.msatsi_mat <- function(fi, ...){
+  #
+  #Out.Damping: 1 (If damping is 'off', then = 0, if damping is 'on', then =1)
+  #Out.DampingCoeff: 2.8 Final damping coefficient used after calculation.
+  #Out.ConfidenceLevel: 95
+  #Out.FractionValidFaultPlanes: 0.5000
+  #Out.MinEventsNode: 20
+  #Out.BootstrapResamplings: 2000
+  #Out.Caption: '(example1)'
+  #Out.TimeSpaceDampingRatio: 1
+  #Out.PTPlot: 0
+  #Out.SLBOOT_TENSOR: [54000x8 double] Information and structure equal to 'example1.slboot_tensor'
+  #Out.SLBOOT_TRPL: [54000x9 double] Information and structure equal to 'example1.slboot_trpl'
+  #Out.BOOTST_EXT: [51289x11 double] Information and structure equal to 'example1.summary_ext'
+  #Out.INPUT_TABLE: [1890x5 double] Information and structure equal to 'example1.sat'
+  #Out.SUMMARY_TABLE: [27x21 double] Information and structure equal to 'example1.summary'
+  #Out.GRID: [[27x3 double] Contains the order of the grid-points in which the inversion results are sorted (for example, in .summary file). If SI is 0D/1D/2D, the columns are [X Y Nevents], where Nevents is the number of focal mechanisms included in each grid point. If SI is 3D/4D, the columns are: [X Y Z T Nevents].
+  dat <- R.matlab::readMat(fi, ...)
+  #   List of 1
+  #   $ OUT:List of 17
+  #   ..$ : int [1, 1] 1
+  #   ..$ : num [1, 1] 2.2
+  #   ..$ : num [1, 1] 95
+  #   ..$ : num [1, 1] 0.5
+  #   ..$ : num [1, 1] 20
+  #   ..$ : num [1, 1] 750
+  #   ..$ : chr [1, 1] " (2D_YZ3) "
+  #   ..$ : num [1, 1] 1
+  #   ..$ : int [1, 1] 0
+  #   ..$ : num [1:6750, 1:8] 0 0 0 1 1 1 2 3 3 0 ...
+  #   ..$ : num [1:6750, 1:9] 0 0 0 1 1 1 2 3 3 0 ...
+  #   ..$ : num [1:6411, 1:11] 0 0 0 0 0 0 0 0 0 0 ...
+  #   ..$ : num [1:1701, 1:5] 0 0 0 0 0 0 0 0 0 0 ...
+  #   ..$ : num [1:9, 1:21] 0.63 0.66 0.81 0.72 0.8 0.86 0.82 0.94 0.88 0.5 ...
+  #   ..$ : num [1:9, 1:3] 0 0 0 1 1 1 2 3 3 0 ...
+  #   ..$ : num [1:12, 1:8] 0 0 0 1 1 1 2 2 2 3 ...
+  #   ..$ : num [1:12, 1:9] 0 0 0 1 1 1 2 2 2 3 ...
+  #   ..- attr(*, "dim")= int [1:3] 17 1 1
+  #   ..- attr(*, "dimnames")=List of 3
+  #   .. ..$ : chr [1:17] "Damping" "DampingCoeff" "ConfidenceLevel" "FractionValidFaultPlanes" ...
+  #   .. ..$ : NULL
+  #   .. ..$ : NULL
+  #   - attr(*, "header")=List of 3
+  #   ..$ description: chr "MATLAB 5.0 MAT-file, Platform: PCWIN64, Created on: Tue Jul 28 10:20:00 2015                                                "
+  #   ..$ version    : chr "5"
+  #   ..$ endian     : chr "little"
+  out <- dat[['OUT']]
+  class(out) <- c('msatsi_mat','array')
+  return(out)
 }
 
 #' @rdname read_msatsi
