@@ -60,8 +60,8 @@ read.msatsi_sat(fi, ...)
 \item{x,object}{an object}
 }
 \description{
-MSATSI has a standardized set of output files.  These functions
-can be used to read-in certain files and create associated
+MSATSI has a standardized set of input and output files.  The functions
+her can be used to read these into R and work with the associated
 objects.
 }
 

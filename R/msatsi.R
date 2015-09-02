@@ -1,7 +1,7 @@
 #' MSATSI output readers
 #'
-#' MSATSI has a standardized set of output files.  These functions
-#' can be used to read-in certain files and create associated
+#' MSATSI has a standardized set of input and output files.  The functions
+#' her can be used to read these into R and work with the associated
 #' objects.
 #'
 #' @name read_msatsi
