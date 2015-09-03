@@ -1,8 +1,17 @@
-#' MSATSI output readers
+#' MSATSI I/O
 #'
-#' MSATSI has a standardized set of input and output files.  The functions
-#' her can be used to read these into R and work with the associated
-#' objects.
+#' The functions here can be used
+#' to read MSATSI's standardized
+#' set of input and output files
+#' into R.
+#'
+#' @details
+#' Each function produces an object with a specific class, with at least
+#' a \code{\link{print}} method
+#'
+#' \code{\link{read.msatsi_mat}} uses \code{\link[R.matlab]{readMat}} to
+#' read in from matlab's binary data format; it drops the header information,
+#' which only includes creation date and system platform information.
 #'
 #' @name read_msatsi
 NULL
@@ -19,13 +28,13 @@ NULL
 read.msatsi_slboot_trpl <- function(fi, ...){
   # 0D-2D: X Y Phi Tr1 Pl1 Tr2 Pl2 Tr3 Pl3
   # 3D-4D: X Y Z T Phi Tr1 Pl1 Tr2 Pl2 Tr3 Pl3
-  dat <- read.table(fi, header=TRUE, ...)
+  dat <- utils::read.table(fi, header=TRUE, ...)
   class(dat) <- c('msatsi_slboot_trpl','data.frame')
   attr(dat, 'is.3D') <- ncol(dat) > 9
   return(dat)
 }
 
-#' @rdname read_msatsi
+# @rdname read_msatsi
 #' @export
 print.msatsi_slboot_trpl <- function(x, ...){
   message("msatsi slboot trpl output:\n3D/4D: ", attr(x, 'is.3D'))
@@ -82,14 +91,15 @@ read.msatsi_mat <- function(fi, ...){
   #   ..$ endian     : chr "little"
   out <- dat[['OUT']]
   class(out) <- c('msatsi_mat','array')
+  attr(out, 'is.3D') <- NA
   return(out)
 }
 
-#' @rdname read_msatsi
+# @rdname read_msatsi
 #' @export
-print.msatsi_slboot_trpl <- function(x, ...){
-  message("msatsi slboot trpl output:\n3D/4D: ", attr(x, 'is.3D'))
-  print(dplyr::tbl_df(x), ...)
+print.msatsi_mat <- function(x, ...){
+  message("msatsi matlab output:\n3D/4D: ", attr(x, 'is.3D'))
+  print(x, ...)
 }
 
 #' @rdname read_msatsi
@@ -97,13 +107,13 @@ print.msatsi_slboot_trpl <- function(x, ...){
 read.msatsi_slboot_tensor <- function(fi, ...){
   # 0D-2D: X Y See Sen Seu Snn Snu Suu
   # 3D-4D: X Y Z T See Sen Seu Snn Snu Suu
-  dat <- read.table(fi, header=TRUE, ...)
+  dat <- utils::read.table(fi, header=TRUE, ...)
   class(dat) <- c('msatsi_slboot_tensor','data.frame')
   attr(dat, 'is.3D') <- ncol(dat) > 8
   return(dat)
 }
 
-#' @rdname read_msatsi
+# @rdname read_msatsi
 #' @export
 print.msatsi_slboot_tensor <- function(x, ...){
   message("msatsi slboot tensor output:\n3D/4D: ", attr(x, 'is.3D'))
@@ -120,13 +130,13 @@ read.msatsi_summary <- function(fi, ...){
   # Pl2Best Pl2Min Pl2Max
   # Tr3Best Tr3Min Tr3Max
   # Pl3Best Pl3Min Pl3Max
-  dat <- read.table(fi, header=TRUE, ...)
+  dat <- utils::read.table(fi, header=TRUE, ...)
   class(dat) <- c('msatsi_summary','data.frame')
   attr(dat, 'is.3D') <- NA
   return(dat)
 }
 
-#' @rdname read_msatsi
+# @rdname read_msatsi
 #' @export
 print.msatsi_summary <- function(x, ...){
   message("msatsi summary output:")
@@ -137,13 +147,15 @@ print.msatsi_summary <- function(x, ...){
 #' @export
 read.msatsi_summary_ext <- function(fi, ...){
   # X Y Z T PHI TR1 PL1 TR2 PL2 TR3 PL3
-  dat <- read.table(fi, header=TRUE, ...)
+  dat <- utils::read.table(fi, header=FALSE,
+                           col.names=c('X','Y','Z','T','PHI','TR1','PL1','TR2','PL2','TR3','PL3'),
+                           ...)
   class(dat) <- c('msatsi_summary_ext','data.frame')
   attr(dat, 'is.3D') <- NA
   return(dat)
 }
 
-#' @rdname read_msatsi
+# @rdname read_msatsi
 #' @export
 print.msatsi_summary_ext <- function(x, ...){
   message("msatsi summary (ext) output:")
@@ -157,13 +169,14 @@ print.msatsi_summary_ext <- function(x, ...){
 read.msatsi_sat <- function(fi, ...){
   # 0D-2D: X Y DIP_DIR DIP_ANGLE RAKE
   # 3D-4D: X Y Z T DIP_DIR DIP_ANGLE RAKE
-  dat <- read.table(fi, header=FALSE, ...)
+  dat <- utils::read.table(fi, header=FALSE, ...)
   nc <- ncol(dat)
+  ddr <- c('Dipdir','Dip','Rake')
   three.d <- if (nc == 5){
-    names(dat) <- c('X','Y','Dipdir','Dip','Rake')
+    names(dat) <- c('X','Y',ddr)
     FALSE
   } else if (nc == 7){
-    names(dat) <- c('X','Y','Z','T','Dipdir','Dip','Rake')
+    names(dat) <- c('X','Y','Z','T',ddr)
     TRUE
   } else {
     stop('invalid .sat file')
@@ -173,7 +186,7 @@ read.msatsi_sat <- function(fi, ...){
   return(dat)
 }
 
-#' @rdname read_msatsi
+# @rdname read_msatsi
 #' @export
 print.msatsi_input <- function(x, ...){
   message("msatsi input file:\n3D/4D: ", attr(x, 'is.3D'))
@@ -198,7 +211,7 @@ summary.msatsi_input <- function(object, ...){
   return(summ)
 }
 
-#' @rdname read_msatsi
+# @rdname read_msatsi
 #' @export
 print.msatsi_input.summary <- function(x, ...){
   message("msatsi input summary:\n3D/4D: ", x[['is.3D']])
@@ -222,8 +235,28 @@ plot.msatsi_input.summary <- function(x, ...){
 
 ## Various utilities
 
+#' Relative principal stress magnitudes and directions
+#'
+#' @description This function finds the principal
+#' stresses from the eigenvalues and eigenvectors of
+#' the deviatoric stress tensor, \code{s}, defined as the stress tensor
+#' minus the mean (or volumetric) stress.
+#'
+#' @details Uses \code{\link{eigen}} to return the orientation
+#' and magnitudes (in MPa -- check this) of the relative principal stresses.
+#'
+#' @param x object to extract relative stress magnitudes from
+#' @param s numeric; a vector of stress tensor components in the following order:
+#' s11 s12 s13 s22 s23 s33
+#' @param ... additional parameters to \code{\link{.deviatoric_tensor}}
+#' @export
+#' @seealso \code{\link{read_msatsi}}
+relative_stress <- function(x, ...) UseMethod('relative_stress')
+
+#' @rdname relative_stress
+#' @export
 .deviatoric_tensor <- function(s, ...) {
-  #See       Sen       Seu       Snn       Snu       Suu
+  #
   s <- as.vector(s)
   #       e     n     u
   e <- c(s[1], s[2], s[3]) # e
@@ -232,20 +265,20 @@ plot.msatsi_input.summary <- function(x, ...){
   D <- rbind(e,n,u)
 }
 
-#' Return the relative stress magnitudes and directions
-#' @export
-#' @seealso \code{\link{read_msatsi}}
-relative_stress <- function(x, ...) UseMethod('relative_stress')
-
 #' @rdname relative_stress
 #' @export
-relative_stress.slboot_tensor <- function(x, ...){
+relative_stress.msatsi_slboot_tensor <- function(x, ...){
   .local <- function(s, ...){
     eigS <- eigen(.deviatoric_tensor(s, ...), symmetric=TRUE)
     c(eigS[['values']], as.vector(eigS[['vectors']]))
   }
   XY <- dplyr::select(x, -starts_with('S'))
   s_ <- dplyr::select(x, starts_with('S'))
-  t(apply(X=s_, MARGIN = 1, FUN = .local)) %>% as.data.frame %>% dplyr::tbl_df -> S
-  cbind(XY, S)
+  t(apply(X=s_, MARGIN = 1, FUN = .local)) %>% as.data.frame -> S
+  cbind(XY, S) %>%
+    dplyr::rename(S1=`V1`, S2=`V2`, S3=`V3`,
+                  x1=`V4`, x2=`V5`, x3=`V6`,
+                  y1=`V7`, y2=`V8`, y3=`V9`,
+                  z1=`V10`, z2=`V11`, z3=`V12`) %>%
+    dplyr::tbl_df(.)
 }

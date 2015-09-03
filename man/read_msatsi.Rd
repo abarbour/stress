@@ -2,12 +2,6 @@
 % Please edit documentation in R/msatsi.R
 \name{read_msatsi}
 \alias{plot.msatsi_input.summary}
-\alias{print.msatsi_input}
-\alias{print.msatsi_input.summary}
-\alias{print.msatsi_slboot_tensor}
-\alias{print.msatsi_slboot_trpl}
-\alias{print.msatsi_summary}
-\alias{print.msatsi_summary_ext}
 \alias{read.msatsi_mat}
 \alias{read.msatsi_sat}
 \alias{read.msatsi_slboot_tensor}
@@ -16,35 +10,21 @@
 \alias{read.msatsi_summary_ext}
 \alias{read_msatsi}
 \alias{summary.msatsi_input}
-\title{MSATSI output readers}
+\title{MSATSI I/O}
 \usage{
 read.msatsi_slboot_trpl(fi, ...)
 
-\method{print}{msatsi_slboot_trpl}(x, ...)
-
 read.msatsi_mat(fi, ...)
-
-\method{print}{msatsi_slboot_trpl}(x, ...)
 
 read.msatsi_slboot_tensor(fi, ...)
 
-\method{print}{msatsi_slboot_tensor}(x, ...)
-
 read.msatsi_summary(fi, ...)
-
-\method{print}{msatsi_summary}(x, ...)
 
 read.msatsi_summary_ext(fi, ...)
 
-\method{print}{msatsi_summary_ext}(x, ...)
-
 read.msatsi_sat(fi, ...)
 
-\method{print}{msatsi_input}(x, ...)
-
 \method{summary}{msatsi_input}(object, ...)
-
-\method{print}{msatsi_input.summary}(x, ...)
 
 \method{plot}{msatsi_input.summary}(x, ...)
 }
@@ -60,8 +40,17 @@ read.msatsi_sat(fi, ...)
 \item{x,object}{an object}
 }
 \description{
-MSATSI has a standardized set of input and output files.  The functions
-her can be used to read these into R and work with the associated
-objects.
+The functions here can be used
+to read MSATSI's standardized
+set of input and output files
+into R.
+}
+\details{
+Each function produces an object with a specific class, with at least
+a \code{\link{print}} method
+
+\code{\link{read.msatsi_mat}} uses \code{\link[R.matlab]{readMat}} to
+read in from matlab's binary data format; it drops the header information,
+which only includes creation date and system platform information.
 }
 
