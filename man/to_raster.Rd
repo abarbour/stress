@@ -7,7 +7,18 @@
 \usage{
 to_raster(x, ...)
 
-\method{to_raster}{msatsi_summary_ext}(x, ...)
+\method{to_raster}{msatsi_summary_ext}(x, transpose = FALSE,
+  make.360 = TRUE, ...)
+}
+\arguments{
+\item{x}{object}
+
+\item{...}{additional parameters to
+\code{\link[raster]{rasterFromXYZ}}}
+
+\item{transpose}{logical; should the x and y coordinates be swapped?}
+
+\item{make.360}{logical; should trends be in the range [0,360] rather than [-180,180]?}
 }
 \description{
 Convert objects to raster objects

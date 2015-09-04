@@ -23,14 +23,20 @@
 #' @param ang.plunge numeric; plunch or dip
 #' @param r numeric; the radius of the stereonet
 #' @param add logical; should the points be added to the current device?
-#' @param pch numeric; the symbol type of the points
+#' @param pt.pch,pt.col,pt.cex numeric; the symbol type(s) of the points,
+#' the color(s) of the points, and the \code{cex}(s) of the points
+#' @param relpos numeric; a vector giving the relative shift to apply to the TP projection
+#' @param dressing logical; include projection markings?
+#' @param markers logical; should markings for the projection be included? (irrelevant if \code{!dressing})
 #' @param ... additional arguments to \code{\link{points}}
 #' @examples
 #'
-#' TP(runif(20, min = 0, max = 90),c(45,55))
-#' TP(runif(20, min = 180, max = 270),c(45,55), pch=1, add=TRUE)
+#' par(mar=rep(0,4), oma=rep(0.2,4))
+#' TP(runif(20, min = 0, max = 90),c(45,55), xlim=c(-2,2), ylim=c(-2,2))
+#' TP(runif(20, min = 180, max = 270),c(45,55), pt.pch=1, add=TRUE)
+#' TP(runif(20, min = 180, max = 270),c(45,55), pt.col='red', add=TRUE, relpos=c(2,0.5), markers=FALSE)
 #'
-TP <- function(ang.trend, ang.plunge, r=NULL, add=FALSE, pch=16, ...){
+TP <- function(ang.trend, ang.plunge, r=NULL, add=FALSE, pt.pch=16, pt.col='black', pt.cex=0.8, relpos = c(0,0), dressing=TRUE, markers=TRUE, ...){
   #
   to_rad <- pi/180
   if (is.null(r)) r <- 1
@@ -38,18 +44,21 @@ TP <- function(ang.trend, ang.plunge, r=NULL, add=FALSE, pch=16, ...){
   trend <- pi/2 - ang.trend*to_rad
   plunge <- ang.plunge*to_rad
   #
-  #x <- -1 * r * sin(trend) * tan(plunge/2)
-  #y <- -1 * r * cos(trend) * tan(plunge/2)
   XYc <- complex(argument = trend, modulus = r * sqrt(2) * cos(pi/4 + plunge/2))
-  if (!add){
-    circ <- r * stress::circle()
-    re <- 1.06
-    plot(circ*re, asp=1, type='l', col=NA, lwd=1.5,	axes=FALSE, xlab="", ylab="")
-    lines(circ, col='grey', lwd=1.5)
-    segments(c(-r,0), c(0,-r), c(r,0), c(0,r), col='grey', lty=3)
-    points(0, 0, pch=3, col='grey', lwd=2)
-    text(c(-r*re,0,r*re,0), c(0,-r*re,0,r*re), c('W','S','E','N'), col='grey50')
-    #
+  relpos <- as.vector(relpos)
+  rel.x <- relpos[1]
+  rel.y <- ifelse(length(relpos) < 2, rel.x, relpos[2])
+  shift <- complex(real = rel.x, imaginary = rel.y)
+  circ <- r * stress::circle()
+  re <- 1.06
+  if (!add) plot(circ*re+c(rel.x, rel.y), asp=1, type='l', col=NA, lwd=1.5,	axes=FALSE, xlab="", ylab="", ...)
+  if (dressing){
+    lines(circ[,1]+rel.x, circ[,2]+rel.y, col='grey', lwd=1.5)
+    segments(c(-r,0)+rel.x, c(0,-r)+rel.y, c(r,0)+rel.x, c(0,r)+rel.y, col='grey', lty=3)
+    if (markers){
+      points(rel.x, rel.y, pch=3, col='grey', lwd=2)
+      text(c(-r*re,0,r*re,0)+rel.x, c(0,-r*re,0,r*re)+rel.y, c('W','S','E','N'), col='grey50')
+    }
   }
-  points(XYc, cex=0.8, pch=pch, ...)
+  points(XYc+shift, cex=pt.cex, pch=pt.pch, col=pt.col)
 }

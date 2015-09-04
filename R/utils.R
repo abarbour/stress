@@ -3,8 +3,9 @@
 #' @param origin numeric; where the first point begins, in degrees
 #' @param n numeric; an optional way to specify the number of points from
 #' the origin to the origin + 360; setting this negates \code{dtheta}
+#' @param delx,dely numeric; the amount to shift the origin in plotting space
 #' @export
-circle <- function (dtheta = 1, origin = 0, n) {
+circle <- function (dtheta = 1, origin = 0, n, delx=0, dely=0) {
   end <- origin + 360
   thetas <- if (missing(n)){
     seq.int(from = origin, to = end, by = dtheta)
@@ -12,7 +13,7 @@ circle <- function (dtheta = 1, origin = 0, n) {
     seq.int(from = origin, to = end, length.out = n)
   }
   thetas <- thetas * pi / 180
-  return(cbind(x = cos(thetas), y = sin(thetas)))
+  return(cbind(x = cos(thetas) + delx, y = sin(thetas) + dely))
 }
 
 #' Calculate dip direction from strike

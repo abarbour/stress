@@ -4,7 +4,7 @@
 \alias{circle}
 \title{Return a unit circle}
 \usage{
-circle(dtheta = 1, origin = 0, n)
+circle(dtheta = 1, origin = 0, n, delx = 0, dely = 0)
 }
 \arguments{
 \item{dtheta}{numeric; the disretization in degrees.}
@@ -13,6 +13,8 @@ circle(dtheta = 1, origin = 0, n)
 
 \item{n}{numeric; an optional way to specify the number of points from
 the origin to the origin + 360; setting this negates \code{dtheta}}
+
+\item{delx,dely}{numeric; the amount to shift the origin in plotting space}
 }
 \description{
 Return a unit circle

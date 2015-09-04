@@ -4,7 +4,9 @@
 \alias{TP}
 \title{Stereonet representation of trend and plunge}
 \usage{
-TP(ang.trend, ang.plunge, r = NULL, add = FALSE, pch = 16, ...)
+TP(ang.trend, ang.plunge, r = NULL, add = FALSE, pt.pch = 16,
+  pt.col = "black", pt.cex = 0.8, relpos = c(0, 0), dressing = TRUE,
+  markers = TRUE, ...)
 }
 \arguments{
 \item{ang.trend}{numeric; trend or azimuth}
@@ -15,7 +17,14 @@ TP(ang.trend, ang.plunge, r = NULL, add = FALSE, pch = 16, ...)
 
 \item{add}{logical; should the points be added to the current device?}
 
-\item{pch}{numeric; the symbol type of the points}
+\item{pt.pch,pt.col,pt.cex}{numeric; the symbol type(s) of the points,
+the color(s) of the points, and the \code{cex}(s) of the points}
+
+\item{relpos}{numeric; a vector giving the relative shift to apply to the TP projection}
+
+\item{dressing}{logical; include projection markings?}
+
+\item{markers}{logical; should markings for the projection be included? (irrelevant if \code{!dressing})}
 
 \item{...}{additional arguments to \code{\link{points}}}
 }
@@ -35,8 +44,10 @@ Uses the equal-area (lower) hemispherical, or \emph{Schmidt}, projection.
 Uses \code{\link{complex}}, which recycles input vectors as needed
 }
 \examples{
-TP(runif(20, min = 0, max = 90),c(45,55))
-TP(runif(20, min = 180, max = 270),c(45,55), pch=1, add=TRUE)
+par(mar=rep(0,4), oma=rep(0.2,4))
+TP(runif(20, min = 0, max = 90),c(45,55), xlim=c(-2,2), ylim=c(-2,2))
+TP(runif(20, min = 180, max = 270),c(45,55), pt.pch=1, add=TRUE)
+TP(runif(20, min = 180, max = 270),c(45,55), pt.col='red', add=TRUE, relpos=c(2,0.5), markers=FALSE)
 }
 \references{
 [1] Diederichs, Mark S (1990),
