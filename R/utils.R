@@ -17,7 +17,7 @@ circle <- function (dtheta = 1, origin = 0, n, delx=0, dely=0) {
 }
 
 #' Calculate dip direction from strike
-#' @param strike.deg numeric; the strike of the nodal plane, in degrees
+#' @param strike numeric; the strike of the nodal plane, in degrees
 #' @export
 dip_direction <- function(strike = 0){
   strike + 90

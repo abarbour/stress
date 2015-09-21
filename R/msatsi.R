@@ -1,3 +1,20 @@
+#' MSATSI methods
+#'
+#' The functions here can be used
+#' to manipulate classes based on
+#' MSATSI input and output files.
+#'
+#' @param x,object an object
+#' @param ... additional parameters, usually passed to
+#' \code{\link{summary}},
+#' \code{\link{print}}, or
+#' \code{\link{plot}}
+#'
+#' @name msatsi-methods
+#' @aliases msatsi
+#' @seealso \code{\link{read_msatsi}}
+NULL
+
 #' MSATSI I/O
 #'
 #' The functions here can be used
@@ -11,19 +28,19 @@
 #'
 #' \code{\link{read.msatsi_mat}} uses \code{\link[R.matlab]{readMat}} to
 #' read in from matlab's binary data format; it drops the header information,
-#' which only includes creation date and system platform information.
+#' which only includes creation date and information on the original
+#' system platform.
+#'
+#' @param fi character; the filename
+#' @param ... additional parameters, usually passed to
+#' \code{\link{read.table}}, or
+#' \code{\link[R.matlab]{readMat}}
 #'
 #' @name read_msatsi
+#' @seealso \code{\link{msatsi-methods}}
 NULL
 
 #' @rdname read_msatsi
-#' @param fi character; the filename
-#' @param x,object an object
-#' @param ... additional parameters, usually passed to
-#' \code{\link{read.table}},
-#' \code{\link{print}},
-#' \code{\link[R.matlab]{readMat}}, or
-#' \code{\link{plot}}
 #' @export
 read.msatsi_slboot_trpl <- function(fi, ...){
   # 0D-2D: X Y Phi Tr1 Pl1 Tr2 Pl2 Tr3 Pl3
@@ -34,7 +51,7 @@ read.msatsi_slboot_trpl <- function(fi, ...){
   return(dat)
 }
 
-# @rdname read_msatsi
+#' @rdname msatsi-methods
 #' @export
 print.msatsi_slboot_trpl <- function(x, ...){
   message("msatsi slboot trpl output:\n3D/4D: ", attr(x, 'is.3D'))
@@ -95,7 +112,7 @@ read.msatsi_mat <- function(fi, ...){
   return(out)
 }
 
-# @rdname read_msatsi
+#' @rdname msatsi-methods
 #' @export
 print.msatsi_mat <- function(x, ...){
   message("msatsi matlab output:\n3D/4D: ", attr(x, 'is.3D'))
@@ -113,7 +130,7 @@ read.msatsi_slboot_tensor <- function(fi, ...){
   return(dat)
 }
 
-# @rdname read_msatsi
+#' @rdname msatsi-methods
 #' @export
 print.msatsi_slboot_tensor <- function(x, ...){
   message("msatsi slboot tensor output:\n3D/4D: ", attr(x, 'is.3D'))
@@ -136,7 +153,7 @@ read.msatsi_summary <- function(fi, ...){
   return(dat)
 }
 
-# @rdname read_msatsi
+#' @rdname msatsi-methods
 #' @export
 print.msatsi_summary <- function(x, ...){
   message("msatsi summary output:")
@@ -155,7 +172,7 @@ read.msatsi_summary_ext <- function(fi, ...){
   return(dat)
 }
 
-# @rdname read_msatsi
+#' @rdname msatsi-methods
 #' @export
 print.msatsi_summary_ext <- function(x, ...){
   message("msatsi summary (ext) output:")
@@ -186,14 +203,14 @@ read.msatsi_sat <- function(fi, ...){
   return(dat)
 }
 
-# @rdname read_msatsi
+#' @rdname msatsi-methods
 #' @export
 print.msatsi_input <- function(x, ...){
   message("msatsi input file:\n3D/4D: ", attr(x, 'is.3D'))
   print(dplyr::tbl_df(x), ...)
 }
 
-#' @rdname read_msatsi
+#' @rdname msatsi-methods
 #' @export
 summary.msatsi_input <- function(object, ...){
   three.d <- attr(object, 'is.3D')
@@ -211,14 +228,14 @@ summary.msatsi_input <- function(object, ...){
   return(summ)
 }
 
-# @rdname read_msatsi
+#' @rdname msatsi-methods
 #' @export
 print.msatsi_input.summary <- function(x, ...){
   message("msatsi input summary:\n3D/4D: ", x[['is.3D']])
   print(x[['XY.t']], ...)
 }
 
-#' @rdname read_msatsi
+#' @rdname msatsi-methods
 #' @export
 plot.msatsi_input.summary <- function(x, ...){
   three.d <- x[['is.3D']]

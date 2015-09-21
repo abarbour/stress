@@ -9,6 +9,6 @@
 The \code{stress} package: working with stress inversion results
 }
 \seealso{
-\code{\link{dTheta}}
+\code{\link{msatsi-methods}}
 }
 

@@ -5,7 +5,7 @@ Version: 0.0.9999
 Date: 2015-09-01
 Author: Andrew J Barbour
 Maintainer: Andrew J Barbour <andy.barbour@gmail.com>
-Description: Tools for working with inversions of focal mechanisms for stress state
+Description: Tools for working with inversions of focal mechanisms for stress state.
 LazyData: TRUE
 License: GPL (>= 2)
 URL: https://github.com/abarbour/stress
@@ -16,17 +16,19 @@ Depends:
     stats,
     grDevices
 Suggests:
-    dplyr,
     knitr,
+    testthat,
+Imports:
+    plyr,
+    dplyr,
+    magrittr,
     raster,
     rasterVis,
+    Rcpp (>= 0.12.0),
     RColorBrewer,
     reshape2,
     R.matlab,
-    testthat,
-    TeachingDemos,
-Imports:
-    Rcpp (>= 0.12.0)
+    TeachingDemos
 VignetteBuilder:
     knitr
 LinkingTo:

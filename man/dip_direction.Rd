@@ -7,7 +7,7 @@
 dip_direction(strike = 0)
 }
 \arguments{
-\item{strike.deg}{numeric; the strike of the nodal plane, in degrees}
+\item{strike}{numeric; the strike of the nodal plane, in degrees}
 }
 \description{
 Calculate dip direction from strike

@@ -5,8 +5,10 @@ warnings_are_errors: false
 sudo: required
 
 r_binary_packages:
+  - plyr
   - dplyr
   - knitr
+  - magrittr
   - raster
   - rasterVis
   - RColorBrewer
