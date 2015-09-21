@@ -1,0 +1,28 @@
+# .travis.yml for 'stress'
+
+language: r
+warnings_are_errors: false
+sudo: required
+
+r_binary_packages:
+  - dplyr
+  - knitr
+  - raster
+  - rasterVis
+  - RColorBrewer
+  - reshape2
+  - R.matlab
+  - testthat
+  - TeachingDemos
+  - Rcpp
+
+r_github_packages:
+  - jimhester/covr
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change
+
+after_success:
+  - Rscript -e 'library(covr);codecov()'
