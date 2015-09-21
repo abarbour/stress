@@ -296,6 +296,6 @@ relative_stress.msatsi_slboot_tensor <- function(x, ...){
     dplyr::rename(S1=`V1`, S2=`V2`, S3=`V3`,
                   x1=`V4`, x2=`V5`, x3=`V6`,
                   y1=`V7`, y2=`V8`, y3=`V9`,
-                  z1=`V10`, z2=`V11`, z3=`V12`) %>%
-    dplyr::tbl_df(.)
+                  z1=`V10`, z2=`V11`, z3=`V12`) -> RS
+  dplyr::tbl_df(RS)
 }

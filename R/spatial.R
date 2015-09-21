@@ -19,6 +19,7 @@ to_raster <- function(x, ...) UseMethod('to_raster')
 #' @rdname to_raster
 #' @export
 to_raster.msatsi_summary_ext <- function(x, transpose=FALSE, make.360=TRUE, ...){
+  tmp <- X <- Y <- TR1 <- TR2 <- TR3 <- NULL
   if (make.360) x %>% dplyr::mutate(TR1 = `TR1`%%360, TR2 = `TR2`%%360, TR3 = `TR3`%%360) -> x
   if (transpose) x %>% dplyr::mutate(tmp=`X`, X=`Y`, Y=`tmp`) %>% dplyr::select(., -`tmp`) -> x
   raster::rasterFromXYZ(dplyr::select(x, -`Z`, -`T`), ...)
