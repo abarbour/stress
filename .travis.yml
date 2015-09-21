@@ -11,12 +11,13 @@ r_binary_packages:
   - magrittr
   - raster
   - rasterVis
-  - RColorBrewer
   - reshape2
+  - Rcpp
+  - RColorBrewer
   - R.matlab
   - testthat
   - TeachingDemos
-  - Rcpp
+  - viridis
 
 r_github_packages:
   - jimhester/covr

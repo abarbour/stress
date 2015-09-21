@@ -28,7 +28,8 @@ Imports:
     RColorBrewer,
     reshape2,
     R.matlab,
-    TeachingDemos
+    TeachingDemos,
+    viridis
 VignetteBuilder:
     knitr
 LinkingTo:

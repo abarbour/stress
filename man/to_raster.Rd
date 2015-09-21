@@ -7,20 +7,53 @@
 \usage{
 to_raster(x, ...)
 
-\method{to_raster}{msatsi_summary_ext}(x, transpose = FALSE,
-  make.360 = TRUE, ...)
+\method{to_raster}{msatsi_summary_ext}(x, make.360 = TRUE,
+  transpose = FALSE, no.zt = FALSE, ...)
 }
 \arguments{
 \item{x}{object}
 
-\item{...}{additional parameters to
-\code{\link[raster]{rasterFromXYZ}}}
-
-\item{transpose}{logical; should the x and y coordinates be swapped?}
+\item{...}{additional parameters to \code{\link[raster]{rasterFromXYZ}}}
 
 \item{make.360}{logical; should trends be in the range [0,360] rather than [-180,180]?}
+
+\item{transpose}{logical; should the x and y coordinates be swapped?}
+}
+\value{
+A \code{RasterBrick} object
 }
 \description{
 Convert objects to raster objects
+}
+\examples{
+require(raster)
+require(viridis)
+
+# dummy example
+n <- 20
+.x <- seq_len(n)
+.sc <- 5
+.asp <- 1/.sc
+.y <- .sc*.x
+xy <- expand.grid(x=.x, y=.y)
+.t <- seq_len(nrow(xy))
+z <- cos(.t*pi/90 + pi/6)**2
+D <- data.frame(X=xy$x, Y=xy$y, Z=z, T=0, TR1=10, TR2=20, TR3=40)
+class(D) <- c("msatsi_summary_ext", 'data.frame')
+
+# Create the rasters (RasterBrick to be specific):
+print(RB <- to_raster(D))
+
+# extract certain layers
+r.z <- raster::raster(RB, 'Z')
+all.equal(r.z, raster::raster(RB, layer=1))
+
+plot(r.z, col=viridis(n), zlim=c(0,1))
+}
+\references{
+\url{https://cran.r-project.org/web/packages/raster/vignettes/Raster.pdf}
+}
+\seealso{
+\code{\link{read.msatsi_summary_ext}}, \code{\link[raster]{brick}}
 }
 
