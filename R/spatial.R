@@ -11,6 +11,7 @@
 #' @param x object
 #' @param make.360 logical; should trends be in the range [0,360] rather than [-180,180]?
 #' @param transpose logical; should the x and y coordinates be swapped?
+#' @param no.zt logical; should the Z and T dimensions be excluded from the resulting object?
 #' @param ... additional parameters to \code{\link[raster]{rasterFromXYZ}}
 #'
 #' @return A \code{RasterBrick} object
@@ -50,6 +51,7 @@ to_raster <- function(x, ...) UseMethod('to_raster')
 #' @rdname to_raster
 #' @export
 to_raster.msatsi_summary_ext <- function(x, make.360=TRUE, transpose=FALSE, no.zt=FALSE, ...){
+  TR1 <- TR2 <- TR3 <- X <- Y <- Z <- `T` <- NULL
   if (make.360){
     # use modulo division to restrict range
     dplyr::mutate(x, "TR1" = `TR1`%%360, "TR2" = `TR2`%%360, "TR3" = `TR3`%%360) -> x

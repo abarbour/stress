@@ -18,6 +18,8 @@ to_raster(x, ...)
 \item{make.360}{logical; should trends be in the range [0,360] rather than [-180,180]?}
 
 \item{transpose}{logical; should the x and y coordinates be swapped?}
+
+\item{no.zt}{logical; should the Z and T dimensions be excluded from the resulting object?}
 }
 \value{
 A \code{RasterBrick} object

@@ -17,19 +17,19 @@ Depends:
     grDevices
 Suggests:
     knitr,
-    testthat,
-Imports:
     plyr,
+    rasterVis,
+    reshape2,
+    RColorBrewer,
+    testthat,
+    TeachingDemos,
+    viridis
+Imports:
     dplyr,
     magrittr,
     raster,
-    rasterVis,
     Rcpp (>= 0.12.0),
-    RColorBrewer,
-    reshape2,
-    R.matlab,
-    TeachingDemos,
-    viridis
+    R.matlab
 VignetteBuilder:
     knitr
 LinkingTo:
