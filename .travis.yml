@@ -17,10 +17,11 @@ r_binary_packages:
   - R.matlab
   - testthat
   - TeachingDemos
-  - viridis
+#currently unavailable:  - viridis
 
 r_github_packages:
   - jimhester/covr
+  - sjmgarnier/viridis
 
 notifications:
   email:
