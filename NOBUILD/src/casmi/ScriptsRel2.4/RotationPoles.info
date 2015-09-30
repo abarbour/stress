@@ -1,0 +1,18 @@
+# Pair of Plates, Rotation Pole, lon, lat, and angular velocity in deg/year.
+# First plate moves anticlockwise with respect to second plate. Data are taken from PB2002 (Bird, 2003).
+1  Africa-Antarctica         -39.239        5.566      1.272e-7 
+2  Africa-Eurasia            -20.615       21.031      1.228e-7 
+3  Africa-North_America       38.279       78.807      2.380e-7 
+4  Africa-South_America      -39.402       62.482      3.096e-7
+5  Antarctica-Australia     -141.824      -13.067      6.496e-7
+6  Antarctica-Pacific         64.315      -83.984      0.869e-7
+7  Antarctica-South_America  -40.664       86.417      2.627e-7
+8  Arabia-Eurasia             11.445       28.064      5.327e-7
+9  India-Eurasia              17.651       24.372      5.051e-7
+10 Eurasia-North_America     135.831       62.408      2.137e-7
+11 Eurasia-Pacific            61.066      -85.819      0.859e-7
+12 Pacific-Australia        -178.258      -60.000     10.744e-7
+13 Pacific-North_America     101.833      -48.709      7.486e-7
+14 Cocos-North_America      -120.679       27.883     13.572e-7
+15 Nazca-South_America       -94.005       55.957      7.246e-7
+

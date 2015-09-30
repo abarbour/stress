@@ -1,0 +1,48 @@
+echo " ... working in script CreateMultiPolygList"
+
+echo " " > $TEMP/MPolygData   # list containing all multiple polygon files
+echo " " > $TEMP/MPolygFilIgnore   # list containing switch if fill is to be ignored
+
+set loop = 0
+set num = 1
+while ($loop != $MultiPolygons) 
+  
+  eval echo -n '$MPolyg'$num"FilIgnore"" " >> $TEMP/MPolygFilIgnore
+  eval echo -n '$MPolyg'$num"Data"" " >> $TEMP/MPolygData 
+  echo -n " " >> $TEMP/MPolygFilIgnore
+  echo -n " " >> $TEMP/MPolygData
+  @ num++
+  @ loop++
+end
+
+
+# the awk script will extract the single segments and write the following
+# lists: MEPolygData list containing the names for the single polygons
+# MEPolygPenAttri: list containing the pen attributes
+# MEPolygFilCol: list containing the fill information
+
+set num = 1
+
+set MPolygFilIgnore =  (`more $TEMP/MPolygFilIgnore`)
+
+foreach MPolygData (`more $TEMP/MPolygData`)
+  set filename = $MPolygData:t
+  
+  echo "     working on file $MPolygData"
+
+  if ($num == 1) then 
+     awk -f $SCRIPTS/splitmultipolyg.awk -v temp=$TEMP -v mpolygdata=$filename -v append="no" -v filigno=$MPolygFilIgnore[1] $MPolygData
+  else 
+     awk -f $SCRIPTS/splitmultipolyg.awk -v temp=$TEMP -v mpolygdata=$filename -v append=yes -v filigno=$MPolygFilIgnore[1] $MPolygData
+  endif
+
+  @ num++
+  shift MPolygFilIgnore
+  echo " "   # linebreak
+end
+
+unset MPolygData
+  
+echo " "
+echo " ... ended"
+

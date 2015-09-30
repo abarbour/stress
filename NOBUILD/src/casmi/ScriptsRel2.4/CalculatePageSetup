@@ -1,0 +1,201 @@
+echo " ... working in script CalculatePageSetup"
+
+# define some defaults
+ if (!($?PaperSize)) then
+    set PaperSize = "A4"
+ endif
+ if (!($?PaperOrientation)) then
+    set PaperOrientation = "Portrait"
+ endif
+ if (!($?LeftMargin)) then
+    set LeftMargin = 1.0
+ endif
+ if (!($?RightMargin)) then
+    set RightMargin = 1.0
+ endif
+ if (!($?PlotWidth)) then
+    set PlotWidth = "default"
+ endif
+
+
+# depending on the PaperSize and Orientation the PlotWidth can be calculated
+# here PaperWidth is set in inches. 
+# GMTPaper_Width corresponds to the PAPER_WIDTH set in the .gmtdefaults
+# this value is independent of the orientation of the plot
+    
+ if ($PaperSize == "A4" ) then
+    set GMTPaper_Width = 8.27
+    set GMTPaper_Media = a4+
+
+    if ($PaperOrientation == "Portrait" ) then
+      set PaperWidth = 8.27
+      set PaperHeight = 11.70
+    else if ($PaperOrientation == "Landscape") then 
+      set PaperWidth = 11.70
+      set PaperHeight = 8.27
+    else
+      set PaperOrientation = "Portrait"
+      set PaperWidth = 8.27
+      set PaperHeight = 11.70
+    endif  
+        
+ else if  ($PaperSize == "A3" ) then 
+     set GMTPaper_Width = 11.70
+     set GMTPaper_Media = a3+
+  
+    if ($PaperOrientation == "Portrait" ) then
+      set PaperWidth = 11.70
+      set PaperHeight = 16.54
+    else if ($PaperOrientation == "Landscape") then 
+      set PaperWidth = 16.54
+      set PaperHeight = 11.70
+    else
+      set PaperOrientation = "Portrait"
+      set PaperWidth = 11.70
+      set PaperHeight = 16.54
+    endif  
+        
+ else if  ($PaperSize == "A2" ) then 
+    set GMTPaper_Width = 16.54
+    set GMTPaper_Media = a2+
+
+    if ($PaperOrientation == "Portrait" ) then
+      set PaperWidth = 16.54
+      set PaperHeight = 23.39
+    else if ($PaperOrientation == "Landscape") then 
+      set PaperWidth = 23.39
+      set PaperHeight = 16.54
+   else
+      set PaperOrientation = "Portrait"
+      set PaperWidth = 16.54
+      set PaperHeight = 23.39
+    endif  
+        
+ else if  ($PaperSize == "A1" ) then 
+    set GMTPaper_Width = 23.39
+    set GMTPaper_Media = a1+
+
+    if ($PaperOrientation == "Portrait" ) then
+      set PaperWidth = 23.39
+      set PaperHeight = 33.07
+    else if ($PaperOrientation == "Landscape") then 
+      set PaperWidth = 33.07
+      set PaperHeight = 23.39
+    else
+      set PaperOrientation = "Portrait"
+      set PaperWidth = 23.39
+      set PaperHeight = 33.07
+    endif  
+   
+ else if  ($PaperSize == "A0" ) then 
+    set GMTPaper_Width = 33.07
+    set GMTPaper_Media = a0+
+
+    if ($PaperOrientation == "Portrait" ) then
+      set PaperWidth = 33.07
+      set PaperHeight = 46.77
+    else if ($PaperOrientation == "Landscape") then 
+      set PaperWidth = 46.77
+      set PaperHeight = 33.07
+    else
+      set PaperOrientation = "Portrait"
+      set PaperWidth = 33.07
+      set PaperHeight = 46.77
+    endif  
+  
+ else if  ($PaperSize == "Letter" ) then 
+    set GMTPaper_Width = 8.5
+    set GMTPaper_Media = letter+
+
+    if ($PaperOrientation == "Portrait" ) then
+      set PaperWidth = 8.5
+      set PaperHeight = 11.0
+    else if ($PaperOrientation == "Landscape") then 
+      set PaperWidth = 11.0
+      set PaperHeight = 8.5
+    else
+      set PaperOrientation = "Portrait"
+      set PaperWidth = 8.5
+      set PaperHeight = 11.5
+    endif  
+  
+ else if  ($PaperSize == "Legal" ) then 
+    set GMTPaper_Width = 8.5
+    set GMTPaper_Media = legal+
+
+    if ($PaperOrientation == "Portrait" ) then
+      set PaperWidth = 8.5
+      set PaperHeight = 14.0
+    else if ($PaperOrientation == "Landscape") then 
+      set PaperWidth = 14.0
+      set PaperHeight = 8.5
+    else
+      set PaperOrientation = "Portrait"
+      set PaperWidth = 8.5
+      set PaperHeight = 14.5
+    endif  
+  
+ else if  ($PaperSize == "Tabloid" ) then 
+    set GMTPaper_Width = 11.0
+    set GMTPaper_Media = legal+
+
+    if ($PaperOrientation == "Portrait" ) then
+      set PaperWidth = 11.0
+      set PaperHeight = 17.0
+    else if ($PaperOrientation == "Landscape") then 
+      set PaperWidth = 17.0
+      set PaperHeight = 11.0
+    else
+      set PaperOrientation = "Portrait"
+      set PaperWidth = 11.0
+      set PaperHeight = 17.0
+    endif  
+  
+ else if ($PaperSize == "user_defined") then
+    set GMTPaper_Media = a4+
+
+    if ($PaperOrientation == "Portrait" ) then
+      set GMTPaper_Width = $PaperWidth
+    else if ($PaperOrientation == "Landscape") then 
+      set GMTPaper_Width = $PaperHeight
+    else
+      set PaperOrientation = "Portrait"
+      set GMTPaper_Width = $PaperWidth
+    endif
+    
+ else   
+      
+    echo "WANRING: the paper format you choose is not available, set to A4"
+    set GMTPaper_Width = 8.27
+    
+    if ($PaperOrientation == "Portrait" ) then
+      set PaperWidth = 8.27
+      set PaperHeight = 11.70
+    else if ($PaperOrientation == "Landscape") then 
+      set PaperWidth = 11.70
+      set PaperHeight = 8.27
+    else
+      set PaperOrientation = "Portrait"
+      set PaperWidth = 8.27
+      set PaperHeight = 11.70
+    endif  
+        
+ endif 
+ 
+ # calculate or check PlotWidth
+ if ($PlotWidth == "default" ) then
+
+    set PlotWidth = `awk -v x=$PaperWidth -v y=$LeftMargin 'BEGIN{val=x-2*y; print val}'`  
+
+ else 
+    echo $PaperWidth '<' $PlotWidth > $TEMP/check
+    set Check = `awk -f $SCRIPTS/comp.awk $TEMP/check`  
+ 
+    if ($Check == "true") then
+      echo "WARNING: the PlotWidth you choose is larger than the paper"
+      echo "  I assume you know what you do ..."
+    endif
+
+ endif
+
+echo " ... ended"

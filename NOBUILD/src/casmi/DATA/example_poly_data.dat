@@ -1,0 +1,8 @@
+# data format is: 1 line header, data: longitude latitude , seperate multiple segments with ">"
+20 50
+30 40
+>
+31 45
+34 45
+45 50
+

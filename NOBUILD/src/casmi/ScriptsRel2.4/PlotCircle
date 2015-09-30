@@ -1,0 +1,60 @@
+echo " ... working in script PlotCircle"
+
+# determine how many datapoints CircData contains
+set CircNum =  `awk -f $SCRIPTS/numlines.awk $CircData`
+
+# delete the old temporary CirclePoint.pq file
+echo "# Circles for input file $CircData" > $TEMP/CirclePoint.pq
+
+# create small circles centered at location CircPlon CircPlat
+set loop = 0
+
+while ($loop != $CircNum) 
+  
+  @ loop++
+
+  set CircPlon = `awk -f $SCRIPTS/columnrow.awk row=$loop column=1 $CircData`
+  set CircPlat = `awk -f $SCRIPTS/columnrow.awk row=$loop column=2 $CircData`
+  
+  # calculate the location of north pole (0/90) and origin (0/0) in rotated 
+  # coordinate system with 'north pole' at Eulerpole location and center at
+  # CircPlon/0 (this center will not work if Eulerpole is at 0/0)
+
+  project -T$CircPlon/$CircPlat -C$CircPlon/0 -Fpq << END >  $TEMP/CirclePoint.pro
+  0 90
+END
+
+  set CircPlonpro = `awk '{print $1}' $TEMP/CirclePoint.pro`
+  set CircPlatpro = `awk '{print $2}' $TEMP/CirclePoint.pro`
+
+  project -T$CircPlon/$CircPlat -C$CircPlon/0 -Fpq << END >  $TEMP/CirclePoint.pro
+  0 0
+END
+
+  set Clonpro = `awk '{print $1}' $TEMP/CirclePoint.pro`
+  set Clatpro = `awk '{print $2}' $TEMP/CirclePoint.pro`
+
+  # create file containing the circles of constant latitude in the rotated coord.
+  # system.
+
+  # first calculate which latitude the given radius equals and create const lat circle
+  set CircRadius = `awk -f $SCRIPTS/columnrow.awk row=$loop column=3 $CircData`
+  
+  awk -f $SCRIPTS/constradiuscircle.awk -v radius=$CircRadius > $TEMP/CirclePoint.dat
+ 
+  # project this file with rotation pole equal to Ppro with center Cpro, ADD the output
+  # to file CircPoint.pq and add a ">" seperator
+  project $TEMP/CirclePoint.dat -T$CircPlonpro/$CircPlatpro -C$Clonpro/$Clatpro -Fpq >> $TEMP/CirclePoint.pq
+
+  echo ">" >> $TEMP/CirclePoint.pq
+
+end
+
+# set a clip to the map boundaries, this avoids wrong interpretation of 
+# circles, sometimes there are strange lines 
+awk -f $SCRIPTS/constcircleclip.awk -v lat1=$s_lat1 -v lat2=$s_lat2 -v lon1=$s_lon1 -v lon2=$s_lon2 $TEMP/CirclePoint.pq > $TEMP/CirclePoint.pq.clip
+  
+mv  $TEMP/CirclePoint.pq.clip  $TEMP/CirclePoint.pq
+
+echo " ... ended"
+

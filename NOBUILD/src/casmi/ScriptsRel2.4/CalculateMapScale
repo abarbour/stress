@@ -1,0 +1,16 @@
+# calculate points needed for projection
+
+set lon_midle_m0.5 = `awk -v x=$c1_lon -v y=$c2_lon 'BEGIN{val=(x+y)/2-0.5; print val}'`
+set lon_midle_p0.5 = `awk -v x=$c1_lon -v y=$c2_lon 'BEGIN{val=(x+y)/2+0.5; print val}'`
+set lat_midle = `awk -v x=$c1_lat -v y=$c2_lat 'BEGIN{val=(x+y)/2; print val}'`
+
+# Calculate the projected points (in inches)
+mapproject $GMTRange $GMTProjection <<END > $TEMP/temp.file
+$lon_midle_m0.5 $lat_midle 
+$lon_midle_p0.5 $lat_midle
+END
+
+# use awk file to calculate scale
+set c2_x = `awk '{print $1}' $TEMP/temp.file`
+set c2_y = `awk '{print $2}' $TEMP/temp.file`
+

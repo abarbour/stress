@@ -1,0 +1,86 @@
+#!/bin/csh
+
+echo " ... working in script PrepareStressData"
+
+# Scipt to prepare stress datas stored in a file ($1) to be readable by GMT.
+# parameters to pass: Filename of stress data file, path of GMT, 
+#                     path of TempDirectory, path of Scripts
+#
+#       The following format for the stress (oriented) data file is assumed:
+#        col. 1: latitude (deg)
+#        col. 2: longitude (deg)
+#        col. 3: azimuth of stress direction (deg)
+#        col. 4: type 
+#        col. 5: quality 
+#        col. 6: regime 
+#        col. 7: depth 
+#        col. 8-9: site
+#        col. 10: PBE
+#        col. 11: type of nearest plate boundary
+#        col. 12: distance to nearest plate boundary
+#       The resulting file has the following format:
+#        col. 1: longitude (deg) new calculated point 99 km away
+#        col. 2: latitude (deg) new calculated point 99 km away
+#        col. 3: longitude (deg) original location 
+#        col. 4: latitude (deg) original location
+#        col. 5: azimuth of stress direction (deg)
+#        col. 6: type 
+#        col. 7: quality 
+#        col. 8: regime 
+# 	 col. 9: depth
+# 	 col.10: site
+#        col.11: PBE (Plate Boundary Event)
+#        col.12: type of nearest plate boundary
+#        col.13: distance to nearest plate boundary
+#       It is called $StressDataFile.prep
+
+   
+set StressDataFile = $argv[1]
+set TEMP = $argv[2]
+set SCIPTS = $argv[3] 
+
+# check if StressDataFile contains azimuths which do not ly between 0 and 360
+# degrees (this would confuse GMT). The script writes the "wrong" lines to 
+# trash.dat those which are ok to stdout, the information about the lines
+# written to trash.dat to file $TEMP/info.checkazi.
+echo " ... checking file "$StressDataFile "for azimuths out "
+echo "     of range from 0 to 360 degrees"
+awk -f $SCIPTS/checkazi.awk temp=$TEMP $StressDataFile > $TEMP/OkFile
+cat $TEMP/info.checkazi
+cp $TEMP/OkFile $StressDataFile
+
+# script interchanges lat and lon (for GMT) and concatenetes site code
+# this field may contain a blank
+awk -f $SCIPTS/prep.awk $StressDataFile > $TEMP/stress.cleared    
+
+# We start with a cludge for the oriented symbols...
+#  -given: a point x (lon/lat) and an azimuth (azi)
+#  -generate: a point y, dist (=99km) away from x which is located 
+#      on the great-circle through x which intersects the meridian 
+#      at an angle azi.
+#
+echo " Generate points on great-circle 99km away from observation points ... "
+echo " ... calculating"
+awk  '{ lon = $2; lat = $1; azi = $3; command =  "project -C" lon "/" lat " -A" azi " -G99 -Q -L0/99"; system (command) }' $TEMP/stress.cleared > $TEMP/stress.project
+
+# Drop all odd lines and third column. Extract geographic coordinates
+awk -f $SCIPTS/extract.awk $TEMP/stress.project > $TEMP/stress.extract
+
+# merge the two data files
+#   make sure they have the same number of entries
+#
+set l1 = `wc -l $TEMP/stress.cleared | awk '{print $1}'`
+set l2 = `wc -l $TEMP/stress.extract | awk '{print $1}'`
+if ($l1 == $l2) then
+   paste $TEMP/stress.extract $TEMP/stress.cleared > $StressDataFile".prep"
+else
+   echo "ERROR: Could not create .prep file."
+   echo " Number of lines of projected and original file do not match." $l1 $l2
+   exit (1)
+endif
+
+# now we sort the *.prep file to the right format again:
+awk '{print $1, $2, $4, $3, $5, $6, $7, $8, $9, $10, $11, $12, $13}' $StressDataFile".prep" > $TEMP/stressdata_sorted
+mv $TEMP/stressdata_sorted  $StressDataFile".prep"
+
+echo " ... ended"

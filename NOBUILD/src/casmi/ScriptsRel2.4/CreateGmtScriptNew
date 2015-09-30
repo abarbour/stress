@@ -1,0 +1,1763 @@
+#!/bin/csh
+
+ echo " ... working in script CreateGmtScriptNew"
+ set NL = '\'
+
+# text which will be plotted as a footer on the left bottom of maps
+if ($?WSMLogo) then
+    set LogoTextLine1 = "World Stress Map Rel. 2008"          
+    set LogoTextLine2 = "Helmholtz Centre Potsdam"   
+    set LogoTextLine3 = "GFZ German Research Centre for Geosciences"     >> $TEMP/GmtScript
+
+    # calculate the fontsize, depending on the GMTPaper_Width
+    set LogoFontSizeL = `awk -v pw=$GMTPaper_Width 'BEGIN{x=int(sqrt(pw)*3+0.5); print x}'`
+    set LogoFontSizeM = `awk -v pw=$GMTPaper_Width 'BEGIN{x=int(sqrt(pw)*2+0.5); print x}'`
+    set LogoFontLine1 = `awk -v fs=$LogoFontSizeL  'BEGIN{x=-3.5*(fs/72); print x}'`
+    set LogoFontLineStep = `awk -v fs=$LogoFontSizeM  'BEGIN{x=-1.5*(fs/72); print x}'`
+    set LogoFontLine2 = `awk -v l1=$LogoFontLine1 -v fss=$LogoFontLineStep 'BEGIN{x=l1+fss; print x}'`
+    set LogoFontLine3 = `awk -v l1=$LogoFontLine2 -v fss=$LogoFontLineStep 'BEGIN{x=l1+fss; print x}'`
+endif
+
+# VARIOUS stuff:
+# check if Bug fixed directory GMT_BF for gmt is defined, if not set to  
+# GMT directory
+# taking GMT dir out, because pscoast, etc shall be in $PATH
+#if(!($?GMT_BF)) then
+#   set GMT_BF = $GMT
+#endif
+
+# this Script writes the GMT - Commands needed to create the desired plot.
+# defined variables needed for GMT commands are:
+
+# Verbose mode: (Note: in .gmtdefaults Verbose mode should be FALSE)
+#set GMTVerb = "-V"
+set GMTVerb = " "
+
+# GMTOrigin: Origin of Plot (equal to LeftMargin, BottomMargin )
+# there is a little problem in GMT if you choose Landscape there is an additio-
+# nal shift of 0.25 inches in +y-direction. This is removed here
+if ($PaperOrientation == "Landscape") then 
+    set AddYShift = 0
+    set BottomMargin = `awk -v x=$BottomMargin -v y=$AddYShift 'BEGIN{val=x + y; print val}'`  
+endif
+set GMTOrigin = "-X"$LeftMargin" -Y"$BottomMargin
+
+# GMTRange: Range of map  (read in MasterScript, put togeter in CalculateScale)
+# define GMT linear range, used for plotting stress datas and names
+set GMTLinRange = -R0/$PlotWidth/0/$PlotHeight
+
+# GMTProjection: Projection of map (lat long) defined in CalculateScale
+# GMT linear projection used for plotting stress datas and names
+set GMTLinProj = -Jx1
+
+# GMTPaperOrien: Orientation of Paper
+if ($PaperOrientation == "Portrait") then 
+    set GMTPaperOrien = "-P"
+else 
+    set GMTPaperOrien = " "
+endif
+
+
+#POSTSCRIPT-CODE:
+# check if overlay is desired
+if(!($?OVERLAY)) then
+    set OVERLAY = "no"
+endif
+
+# delete the old GMTScript, set some defaults and so on
+
+echo "#\!/bin/csh"                                         > $TEMP/GmtScript
+echo " "                                                  >> $TEMP/GmtScript
+echo "# GMT SCRIPT FOR PLOTTING MAPS"                     >> $TEMP/GmtScript
+echo "# Created by MasterScript:" $Release                >> $TEMP/GmtScript
+echo " "                                                  >> $TEMP/GmtScript
+echo "# Set some GMTDEFAULTS in the .gmtdefault file"     >> $TEMP/GmtScript  
+
+# echo "gmtset PAPER_WIDTH $GMTPaper_Width"            >> $TEMP/GmtScript
+if (! ($?MEASURE_UNIT) ) then
+	set MEASURE_UNIT = "inch"
+endif
+if (! ($?BASEMAP_TYPE) ) then
+	set BASEMAP_TYPE = "fancy"
+endif
+if (! ($?ANOT_FONT_SIZE) ) then
+	set ANOT_FONT_SIZE = "14p"
+endif
+if (! ($?FRAME_WIDTH) ) then
+	set FRAME_WIDTH = "0.075i"
+endif
+if (! ($?FRAME_PEN) ) then
+	set FRAME_PEN = "1.25p"
+endif
+if (! ($?PAGE_COLOR) ) then
+	set PAGE_COLOR = "255/255/255"
+endif
+if (! ($?LABEL_FONT_SIZE) ) then
+	set LABEL_FONT_SIZE = "14p"
+endif
+
+
+echo "gmtset PAPER_MEDIA $GMTPaper_Media"            >> $TEMP/GmtScript
+echo "gmtset MEASURE_UNIT $MEASURE_UNIT"             >> $TEMP/GmtScript
+echo "gmtset BASEMAP_TYPE $BASEMAP_TYPE"             >> $TEMP/GmtScript
+echo "gmtset ANOT_FONT_SIZE $ANOT_FONT_SIZE"         >> $TEMP/GmtScript
+echo "gmtset FRAME_WIDTH $FRAME_WIDTH"               >> $TEMP/GmtScript
+echo "gmtset FRAME_PEN $FRAME_PEN"                   >> $TEMP/GmtScript
+echo "gmtset PAGE_COLOR $PAGE_COLOR"                 >> $TEMP/GmtScript
+echo "gmtset LABEL_FONT_SIZE $LABEL_FONT_SIZE"       >> $TEMP/GmtScript
+
+################################
+echo "gmtset MEASURE_UNIT inch"                      >> $TEMP/GmtScript
+if($?DOTS_PER_INCH) then 
+     echo "gmtset DOTS_PR_INCH $DOTS_PER_INCH"          >> $TEMP/GmtScript
+endif
+echo " "                                                  >> $TEMP/GmtScript
+
+if ($OVERLAY != "yes" ) then
+
+   # create HEADER and INFO in GmtScript:
+   echo "# Print dummy circle to WRITE POSTSCRIPT HEADER"    >> $TEMP/GmtScript 
+   echo psxy $GMTRange $GMTProjection $GMTOrigin $NL         >> $TEMP/GmtScript
+   echo "   "$GMTPaperOrien  -K -G255/20/100 -Sc0.01 -L  $NL >> $TEMP/GmtScript
+   echo "   -W1p/0/0/0 << END >" $PsName                     >> $TEMP/GmtScript
+   echo $c1_lon"  "$c1_lat                                   >> $TEMP/GmtScript
+   echo "END"                                                >> $TEMP/GmtScript
+   echo " "                                                  >> $TEMP/GmtScript
+
+endif
+
+# Plotting of real Information:
+# FRAME in size of BOUNDING BOX:
+if(!($?BBoxFrame)) then
+    set BBoxFrame = "no"
+endif
+
+if ($BBoxFrame == "y") then
+   # plot an invisible or visible rectangle in the size of the bounding box.
+   # bounding box size is (PlotWidth + 2 times LeftMargin) times
+   # (PlotHeight + 2 times BottomMargin)
+   if (!($?BBoxFrameCol)) then
+      set BBoxFrameCol = "-W1/255/255/255"
+   endif
+   if (!($?BBoxFillCol)) then
+      set BBoxFillCol = " "
+   endif
+
+   # calculate BBoxWidth and BBoxHeight, print rectangle with new origin
+   set BBoxWidth = `awk -v pw=$PlotWidth -v lm=$LeftMargin 'BEGIN{x=pw+2*lm; print x}'`
+   set BBoxHeight = `awk -v ph=$PlotHeight -v bm=$BottomMargin 'BEGIN{x=ph+2*bm; print x}'`
+
+   set BBoxRange = "-R0/$BBoxWidth"/0/"$BBoxHeight"
+
+   echo "# FRAME in size of BOUNDING BOX:"                     >> $TEMP/GmtScript
+   echo "# plot frame"                                         >> $TEMP/GmtScript
+   echo psxy -Jx1 $BBoxRange $BBoxFillCol -O -L -K $NL >> $TEMP/GmtScript
+   echo "   "$GMTPaperOrien $BBoxFillCol $BBoxFrameCol -N  $NL >> $TEMP/GmtScript
+   echo "   -X-$LeftMargin -Y-$BottomMargin << END >>" $PsName >> $TEMP/GmtScript
+   echo 0"   "0                                                >> $TEMP/GmtScript
+   echo $BBoxWidth"   "0                                       >> $TEMP/GmtScript
+   echo $BBoxWidth"   "$BBoxHeight                             >> $TEMP/GmtScript
+   echo 0"   "$BBoxHeight                                      >> $TEMP/GmtScript
+   echo "END"                                                  >> $TEMP/GmtScript
+   echo " "                                                    >> $TEMP/GmtScript
+   echo "# Print dummy circle to reset origin "                >> $TEMP/GmtScript 
+   echo psxy -Jx1 $BBoxRange -O -L -K              $NL >> $TEMP/GmtScript
+   echo "   "$GMTPaperOrien -G255/255/255 -Sc0.01          $NL >> $TEMP/GmtScript
+   echo "   "-X$LeftMargin -Y$BottomMargin                 $NL >> $TEMP/GmtScript
+   echo "   -W1p/0/0/0 << END >>" $PsName                      >> $TEMP/GmtScript
+   echo 0"   "0                                                >> $TEMP/GmtScript
+   echo "END"                                                  >> $TEMP/GmtScript
+   echo " "                                                    >> $TEMP/GmtScript
+
+endif   
+
+
+# TOPOGRAPHY:
+if (!($?Topography)) then
+   set Topography = "n"
+endif
+
+if ($Topography == "y") then
+
+     # check if illumination is defined:
+     if (!($?TopoIllum)) then
+       set TopoIllum = "n"
+     endif
+
+     # check if Illumination is wanted 
+     if ($TopoIllum == "y") then
+
+     # make a smaller file to use for Illumination
+     # (otherwise dtm5.grd would be used)
+     # we use dtm5.grd - otherwise we receive strange errors
+     # echo grdcut $TopoFile $GMTVerb $GMTRange -G$TEMP/"topo_cut.grd ">> $TEMP/GmtScript           
+
+
+       if ($TopoIllumNorm == "default" ) then
+	 set TopoIllumNormStr = "-Nt"
+       else 
+	 set TopoIllumNormStr = "-N$TopoIllumNorm"
+       endif    
+
+       # create illumination file using grdgradient
+       echo "# Calculate illumination file from proj. topogrid-file"   >> $TEMP/GmtScript
+       # no grdcut as then some errors occur
+       # grdimage: Intensity file has improper dimensions!
+       # echo grdgradient $TEMP"topo_cut.grd  $NL"   >>  $TEMP/GmtScript
+       echo "grdgradient $TopoFile  $NL"   >>  $TEMP/GmtScript
+       echo "    "-A$TopoIllumAng   $TopoIllumNormStr        $NL >> $TEMP/GmtScript
+       echo "    "-G$TEMP"topo_ilum.grd" $GMTVerb $NL >> $TEMP/GmtScript
+       echo "  "                                                 >> $TEMP/GmtScript
+
+       set Illumination = "-I$TEMP/topo_ilum.grd"
+
+       # we use the Illumination string to turn off/on illumination
+       else
+       set Illumination = ""
+     endif  # for illumination
+
+     echo "# Plot topography using grdimage #"          >> $TEMP/GmtScript
+     echo grdimage $TopoFile $GMTRange $GMTProjection\
+	       $GMTPaperOrien   $GMTVerb  -O -K             $NL   >> $TEMP/GmtScript
+     echo "   "-C$TopoCptFile  $Illumination ">>" $PsName     >> $TEMP/GmtScript
+     echo "  "                                                >> $TEMP/GmtScript
+endif # for Topo
+
+# check if ClipOn is TRUE, switch clipping off
+if (!($?ClipOn)) then
+   set ClipOn = FALSE
+endif
+
+if ($ClipOn == TRUE) then
+	  echo "# switching psclip off:"                            >> $TEMP/GmtScript
+#  echo "psclip -C -O -V -K      >>" $PsName            >> $TEMP/GmtScript
+endif
+
+
+# OTHER GRID FILE:
+if (!($?OtherGrid)) then
+	 set OtherGrid = "n"
+endif
+
+if ($OtherGrid == "y") then
+# DO not change the parameter sequence in the grdproject call, 
+# the script CheckGridFile assumes this sequence!
+# check if a projected grid of the OtherGrid file exists and if Range
+# and Projection are ok.
+# check which option is used to create images of grdfiles.
+
+	 if( !($?GMTDisplayGrd) ) then
+	    set GMTDisplayGrd = "bitmap"
+	 endif
+
+	 # if grdfile should be displayed as VECTORPLOT with a given resolution, check 
+	 # if file has to be projected before running grdview -Qs
+	 set ProjGrdFile = false
+
+	 if ($GMTDisplayGrd == "vectorplot") then   
+
+	   # check if it is nessesary to project the grdfile. This is used to resample the gridfile
+	   # if the information density is to high. The script CheckVectorGridFile will set the variable
+	   # ProjGrdFile to true if a projected gridfile is needed.
+
+	   set CheckResolution = -E$GridResolution
+	   set CheckFile = $GridFile
+
+	   source $SCRIPTS/CheckVectorGridFile
+
+	  endif
+
+	 # grid has to be projected if it is to be displayed as a BITMAP, or if - when displayed as a 
+	 # VECTORPLOT the variable ProjGrdFile is set to true
+	   if ($GMTDisplayGrd == "bitmap" || $ProjGrdFile == "true") then 
+
+	   # Check if a projected file of the desired name and range+projection already 
+	   # exists. Script CheckGridFile sets the variable Check to ok if projected
+	   # file is ok. 
+
+	   set GridCutGrid = $GridFile:t
+
+	   set CheckOrigFile = $GridFile
+	   set CheckFile = $TEMP"/"$GridCutGrid"_pro.grd"
+	   set CheckResolution = -E$GridResolution
+
+	   source $SCRIPTS/CheckGridFile 
+
+	   echo " ... checking if projected topography file "$TEMP"/"$GridCutGrid"_pro.grd"
+	   echo "     with the choosen range and projection and resolution already exists: $Check"
+	   if ($Check != "ok") then
+	     echo "     -> have to run grdcut and grdproject"
+	   endif
+
+	   echo "# OTHER GRID FILE:"                             >> $TEMP/GmtScript
+	   if ( $Check != "ok") then 
+	     echo "# Projecting file "$GridFile:t" with a resolution  of" \
+			 $GridResolution"dpi"               >> $TEMP/GmtScript
+	     echo grdproject $GridFile $GMTRange        $NL >> $TEMP/GmtScript
+	     echo "   "$GMTProjection -G$TEMP"/"$GridCutGrid"_pro.grd" \
+		     -E$GridResolution  $GMTVerb        $NL >> $TEMP/GmtScript
+	     echo "  "                                           >> $TEMP/GmtScript
+
+	   endif
+
+	   # at this point a projected version of the gridfile exists. This file can either be plotted 
+	   # as a bitmap using grdimage or grdview -Qi+resolution, or it can be plotted as a vectorplot
+	   # using grdview -Qs and projection Jx1
+
+	   if ($GMTDisplayGrd == "vectorplot") then
+	     set QStr = -Qs
+	   else    
+	     set QStr = -Qi$GridResolution
+	   endif
+
+	   echo "# Plot projected grid-file using cpt-file:" \
+	       $GridCptFile:t                                 >> $TEMP/GmtScript 
+  echo grdview  $TEMP"/"$GridCutGrid"_pro.grd" -Jx1   \
+	       $GMTPaperOrien $GMTVerb -O -K $GMTLinRange $NL >> $TEMP/GmtScript
+  echo "   "$QStr                                     $NL >> $TEMP/GmtScript
+  echo "   "-C$GridCptFile     ">>" $PsName               >> $TEMP/GmtScript
+  echo "  "                                               >> $TEMP/GmtScript
+endif
+
+# grdfile can be plotted without beeing projected.
+if ( $GMTDisplayGrd == "vectorplot" && $ProjGrdFile == "false")  then
+
+  # at this point a subgrid with the name $TEMP"/"$TopoCutGrid".grd" exists
+  # but it is not projected!!! 
+
+  echo "# Plot grid-file using cpt-file:" \
+	       $GridCptFile:t                                 >> $TEMP/GmtScript 
+  echo grdview  $GridFile $GMTRange $GMTProjection\
+	       $GMTPaperOrien $GMTVerb -O -K              $NL >> $TEMP/GmtScript
+  echo "   "-Qs                                       $NL >> $TEMP/GmtScript
+  echo "   "-C$GridCptFile     ">>" $PsName               >> $TEMP/GmtScript
+  echo "  "                                               >> $TEMP/GmtScript
+
+endif
+
+endif 
+
+
+      # COASTLINES, RIVERS and POLITICAL BOUNDARIES:
+      if (!($?Coastlines)) then
+         set Coastlines = "n"
+      endif
+      if (!($?Rivers)) then
+         set Rivers = "n"
+      endif
+      if (!($?PoliticalBounds)) then
+         set PoliticalBounds = "n"
+      endif
+
+      #if ( ($Coastlines == "y" || $Rivers == "y") || $PoliticalBounds == "y") then
+     # if ( $Coastlines == "y" ) then   # closing endif on line 409?
+
+      if ( $Coastlines == "y" || $Rivers == "y" || $PoliticalBounds == "y" || $Topography == "y") then
+
+      # Data set, min size of area to plot, max level
+    set DataInfoString = "-D"$DataSet" -A"$DataSize"/0/"$DataLevel
+
+    # overwrite ContinentFill and OceanFill if topography is choosen.
+    # only overwrite ContinentFill - perhaps the user don't want bathemetry
+	if ($Topography == "y") then 
+	   set ContinentFill = "no"
+      #     set OceanFill = " "  
+	   set ContOceanFillStr = " "
+	endif	
+	if ($ContinentFill == "no" && $OceanFill != "no") then
+	      set ContOceanFillStr = " -S"$OceanFill
+	   else if ($ContinentFill != "no" && $OceanFill == "no") then
+	      set ContOceanFillStr = -G$ContinentFill
+	   else if ($ContinentFill == "no" && $OceanFill == "no") then
+	      set ContOceanFillStr = " "
+	   else
+	      set ContOceanFillStr = -G$ContinentFill" -S"$OceanFill
+	endif
+
+
+	# COASTLINES:
+	if ($Coastlines == "y") then 
+	   set CoastPenAttri = $CoastPenSize"/"$CoastPenColor  
+	   set CoastlineString = -W$CoastPenAttri
+	else 
+	   set CoastlineString = " "
+	endif
+
+	# RIVERS, LAKES (default: permanent major rivers (1)):
+	if ($Rivers == "y") then 
+	   set RiverPenAttri = $RiverPenSize"/"$RiverPenColor
+	   set GMTRiverDefault = 1
+	   set RiversString = -I$GMTRiverDefault"/"$RiverPenAttri
+	   # set color for lakes to default to colors of rivers RiverPenColor
+	   # if there is topography set lakestring to "" so bathemetry will be plotted
+	  if ($Topography == "n") then 
+	       set LakeString = -C$RiverPenColor
+	  else
+	      set LakeString = ""
+	  endif
+	else 
+	   set RiversString = " "
+	   # set color for lakes to 
+	   set LakeString = " " 
+      #####################################
+	   set GmtRiverAdditional = " "
+	endif
+
+	# POLITICAL BOUNDARIES:
+	if ($PoliticalBounds == "y") then 
+	   set PolitBoPenAttri = $PolitBoPenSize"/"$PolitBoPenColor  
+	   set GMTPolitBoDefault = a
+	   set PolitBoString = -N$GMTPolitBoDefault"/"$PolitBoPenAttri
+	else 
+	   set PolitBoString = " "
+	endif
+
+	echo "# COASTLINES and/or RIVERS and/or" \
+		  " POLITICAL BOUNDARIES"                          >> $TEMP/GmtScript
+	echo pscoast $GMTProjection $GMTRange -O -K       $NL >> $TEMP/GmtScript
+	echo "   "$GMTPaperOrien $GMTVerb $DataInfoString      $NL >> $TEMP/GmtScript
+	echo "   "$CoastlineString                             $NL >> $TEMP/GmtScript
+	echo "   "$RiversString $GmtRiverAdditional            $NL >> $TEMP/GmtScript
+	echo "   "$LakeString $PolitBoString                   $NL >> $TEMP/GmtScript
+	echo "   "$ContOceanFillStr    ">>" $PsName                >> $TEMP/GmtScript
+	echo " "                                                   >> $TEMP/GmtScript
+
+      endif #corresponding to if ($Coastlines != "y") then .. line 330
+
+
+      # LINES AND POLYGONS from MULTIPLE POLYGON FILES:
+      # check if MultiPolygons are defined
+      if (!($?MultiPolygons)) then
+	 set MultiPolygons = "n"
+      endif
+      if ($MultiPolygons != "n" && $MultiPolygons != "no") then
+       echo "# LINES and POLYGONES from MULTIPLE POLYGON FILES: " >> $TEMP/GmtScript 
+
+       set MEPolygPenAttri = (`more $TEMP/MEPolygPenAttri`)
+       set MEPolygFilCol = (`more $TEMP/MEPolygFilCol`)
+
+       foreach MEPolygData (`more $TEMP/MEPolygData`)
+
+	# determine if polygons are filled, just closed or open
+
+	if ($MEPolygFilCol[1] == "no" || $MEPolygFilCol[1] == \"no\") then
+	   set MEPolygFilCloStr = "-W$MEPolygPenAttri[1] "
+	else if ($MEPolygFilCol[1] == "close" || $MEPolygFilCol[1] == \"close\" ) then 
+	   set MEPolygFilCloStr = "-W$MEPolygPenAttri[1] -L " 
+	else 
+	   set MEPolygFilCloStr = "-W$MEPolygPenAttri[1] -L -$MEPolygFilCol[1] "
+	endif  
+
+	echo "# lines and poligons from $MEPolygData"            >> $TEMP/GmtScript      
+	echo psxy $MEPolygData $GMTRange $GMTProjection $NL >> $TEMP/GmtScript
+	echo "   "$GMTPaperOrien -O -K                       $NL >> $TEMP/GmtScript
+	echo "   "$MEPolygFilCloStr                          $NL >> $TEMP/GmtScript
+	echo "   "$GMTVerb -H2  ">>" $PsName                     >> $TEMP/GmtScript
+	echo " "                                                 >> $TEMP/GmtScript
+
+	shift MEPolygFilCol
+	shift MEPolygPenAttri
+
+       end
+
+       unset MEPolygPenAttri
+       unset MEPolygFilCol
+       unset MEPolygData
+
+      endif
+
+
+      # CONTOUR LINES: 
+      if (!($?Contour)) then
+	set Contour = "n"
+      endif  
+
+      if ($Contour == "y") then
+	if ($ContourAnnot == 0 || $ContourAnnot == zero) then 
+	   set ContourAnnotStr = " "
+	else 
+	   set ContourAnnotStr = "-A"$ContourAnnot
+	endif
+
+	echo "# CONTOUR LINES from file: "$ContourFile              >> $TEMP/GmtScript         
+	echo "# Extract contour lines from the contour file"        >> $TEMP/GmtScript 
+	echo grdcontour $ContourFile $GMTProjection  -K -O $NL >> $TEMP/GmtScript
+	echo "   "$GMTPaperOrien $GMTVerb -C$ContourInterval    $NL >> $TEMP/GmtScript
+	echo "   "$GMTRange $ContourAnnotStr                    $NL >> $TEMP/GmtScript
+	echo "   -T -W"c$ContourCPen "-Wa"$ContourAPen ">>" $PsName >> $TEMP/GmtScript
+	echo " "                                                    >> $TEMP/GmtScript
+
+      endif
+
+
+      # BASEMAP: showing GRID, FRAME ANNOTATIONS and SCALE. 
+      if (!($?SimpleMapScale)) then
+	set SimpleMapScale = "n"
+      endif   
+      if (!($?GridLinesLon)) then
+	set GridLinesLon = "0"
+      endif   
+      if (!($?GridLinesLat)) then
+	set GridLinesLat = "0"
+      endif   
+      if (!($?GridAnnotLon)) then
+	set GridAnnotLon = "0"
+      endif   
+      if (!($?GridAnnotLat)) then
+	set GridAnnotLat = "0"
+      endif   
+
+      set GridString = -Ba$GridAnnotLon"g"$GridLinesLon"/a"$GridAnnotLat"g"$GridLinesLat
+
+      if ($SimpleMapScale == "y") then
+	set ScaleLat = `awk -v x=$c1_lat -v y=$c2_lat 'BEGIN{val=(y-x)/2+x; print val}'`
+	if ($ScalePosition == "default") then
+	  set MapScaleString = "-Lfx2/-0.5/"$ScaleLat"/"$ScaleLength
+	else 
+	  set MapScaleString = "-Lf"$ScalePosition"/"$ScaleLat"/"$ScaleLength
+	endif
+      else 
+	set MapScaleString = " "
+      endif   
+
+      echo "# BASEMAP for GRID, FRAME-ANNOTATIONS and SCALE:"  >> $TEMP/GmtScript 
+      echo psbasemap $GMTRange $GMTProjection  -K -O  $NL >> $TEMP/GmtScript
+      echo "   "$GMTPaperOrien $GridString $GMTVerb        $NL >> $TEMP/GmtScript
+      echo "   "$MapScaleString                   ">>" $PsName >> $TEMP/GmtScript
+      echo "   "                                               >> $TEMP/GmtScript
+
+
+      # INFO about PROJECTION, PROJECTION CENTER and STANDARDPARALLELS:
+      if (!($?PlotInfoString)) then
+	set PlotInfoStrin = "n"
+      endif   
+
+      if ($PlotInfoString == "y" || $PlotInfoString == "s") then   
+	# create inputfile for pstext.
+	set InfoStringX =  $PlotWidth
+	set InfoStringY =  -0.4
+	set InfoFontSize = 6
+	set InfoFontNo = 0
+	set InfoFontJustify = 3
+	if ($?WSMLogo || $PlotInfoString == "s") then 
+	   echo -n "$InfoStringX $InfoStringY $InfoFontSize 0.0 $InfoFontNo" \
+	     "$InfoFontJustify Projection: $ProjectionName " > $TEMP/InfoString
+	else 
+	   echo -n "$InfoStringX $InfoStringY $InfoFontSize 0.0 $InfoFontNo" \
+	     "$InfoFontJustify Projection: $ProjectionName " \
+	     "($InfoMapScaleStr$InfoProjCenterStr$InfoStandParallStr)" > $TEMP/InfoString
+	endif
+
+	echo "# INFO about PROJECTION, PROJECTION CENTER and STANDARDPARALLELS:" >> $TEMP/GmtScript 
+	echo pstext $TEMP/InfoString $GMTLinRange          $NL >> $TEMP/GmtScript
+	echo "   "$GMTPaperOrien $GMTVerb  $GMTLinProj -K -O -N $NL >> $TEMP/GmtScript
+	echo "   "                                   ">>" $PsName   >> $TEMP/GmtScript
+	echo "   "                                                  >> $TEMP/GmtScript
+
+      endif
+
+
+      # PLATE-BOUNDARIES:
+      # check if PlateBounds are defined
+      if (!($?PlateBounds)) then
+	 set PlateBounds = "n"
+      endif
+      if ($PlateBounds == "y") then
+	 set PlaBoPenAttri = $PlaBoPenSiz/$PlaBoPenCol
+
+	 echo "# PLATE BOUNDARIES:"                                >> $TEMP/GmtScript 
+	 echo psxy $PlaBoData $GMTRange $GMTProjection $NL         >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien -O -K -M -W$PlaBoPenAttri    $NL >> $TEMP/GmtScript
+	 echo "   "$GMTVerb -H1   " >>" $PsName                    >> $TEMP/GmtScript
+	 echo " "                                                  >> $TEMP/GmtScript
+      endif
+
+
+      # ISOCHRONES:
+      # check if Isochrons are defined
+      if (!($?Isochrons)) then
+	 set Isochrons = "n"
+      endif
+      if ($Isochrons == "y") then
+	 set IsoPenAttri = $IsoPenSiz/$IsoPenCol
+
+	 echo "# ISOCHRONES: "                                     >> $TEMP/GmtScript 
+	 echo psxy $IsoData $GMTRange $GMTProjection   $NL         >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien -O -K -M -W$IsoPenAttri -H1  $NL >> $TEMP/GmtScript
+	 echo "   "$GMTVerb                        " >>" $PsName   >> $TEMP/GmtScript
+	 echo " "                                                  >> $TEMP/GmtScript
+      endif
+
+
+      # CIRCLES WITH CONSTANT RADIUS:
+      if (!($?PlotCircle)) then
+	 set PlotCircle = "n"
+      endif
+      if ($PlotCircle == "y" || $PlotCircle == "yes") then
+
+       set CircPen = "-W$CircPenSiz/$CircPenCol"
+       echo "# CIRCLES WITH CONSTANT RADIUS: "                     >> $TEMP/GmtScript 
+       echo psxy $TEMP/CirclePoint.pq $GMTRange           $NL      >> $TEMP/GmtScript
+       echo "   "$GMTProjection $GMTPaperOrien -O -K -M        $NL >> $TEMP/GmtScript
+       echo "   "$CircPen                                      $NL >> $TEMP/GmtScript
+       echo "   "$GMTVerb                        ">>" $PsName      >> $TEMP/GmtScript
+       echo " "                                                    >> $TEMP/GmtScript
+      endif
+
+
+
+      # LINES and ARBITRARY POLYGONS:
+      # check if Polygons are defined
+      if (!($?Polygons)) then
+	 set Polygons = "n"
+      endif
+      if ($Polygons != "n" && $Polygons != "no" ) then
+       echo "# LINES and POLYGONES: "                              >> $TEMP/GmtScript 
+
+       set PolygPenSiz = (`more $TEMP/PolygPenSiz`)
+       set PolygPenCol = (`more $TEMP/PolygPenCol`)
+       set PolygFilCol = (`more $TEMP/PolygFilCol`)
+
+       foreach PolygData (`more $TEMP/PolygData`)
+	# skip the PolygData file if PolygData is set to "no"
+	if ($PolygData == "no") then
+	  echo -n " "
+	else
+	echo $PolygData 
+	 # determine if polygons are filled, just closed or open
+	 if ($PolygFilCol[1] == "no") then
+	   set PolygFilCloStr = "-W$PolygPenSiz[1]"/"$PolygPenCol[1]"
+	 else if ($PolygFilCol[1] == "close") then 
+	   set PolygFilCloStr = "-W$PolygPenSiz[1]"/"$PolygPenCol[1] -L " 
+	 else 
+	   set PolygFilCloStr = "-W$PolygPenSiz[1]"/"$PolygPenCol[1] -L -G$PolygFilCol[1]"
+	 endif  
+
+	 set PolygPenAttri = $PolygPenSiz[1]"/"$PolygPenCol[1]
+
+	 echo "# lines and poligons from $PolygData"            >> $TEMP/GmtScript      
+	 echo psxy $PolygData $GMTRange $GMTProjection $NL      >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien -O -K -M                  $NL >> $TEMP/GmtScript
+	 echo "   "$PolygFilCloStr                          $NL >> $TEMP/GmtScript
+	 echo "   "$GMTVerb -H1  ">>" $PsName                   >> $TEMP/GmtScript
+	 echo " "                                               >> $TEMP/GmtScript
+
+	 shift PolygFilCol
+	 shift PolygPenSiz
+	 shift PolygPenCol
+	endif
+       end
+
+       unset PolygPenSiz
+       unset PolygPenCol 
+       unset PolygFilCol 
+
+      endif
+
+
+      # PLATE MOTION:
+      if (!($?PlateMotions)) then
+       set PlateMotions = "n"
+      endif  
+      if ($PlateMotions == "y") then
+       if ($MotionArrow == "y") then
+
+	 set MotionDataFiles = ` more $TEMP/PlateMotionList`
+
+	 echo "# PLATE MOTION: arrows showing relative movement "     >> $TEMP/GmtScript 
+	 echo "psxy $MotionDataFiles $GMTProjection"      $NL         >> $TEMP/GmtScript  
+	 echo "   "$GMTPaperOrien -O -K -W$MotionVecCol           $NL >> $TEMP/GmtScript
+	 echo "   "-G$MotionVecFil  -L  $GMTRange                 $NL >> $TEMP/GmtScript
+	 echo "   "$GMTVerb -H0 -SV$MotionVecShap       " >>" $PsName >> $TEMP/GmtScript
+	 echo " "                                                     >> $TEMP/GmtScript
+       endif
+
+       if ($MotionTraj == "y") then
+
+	 set MotionTrajPen = -W$MotionTrajPen/$MotionTrajCol
+
+	 echo "# PLATE MOTION: trajectories showing relative movement"  >> $TEMP/GmtScript 
+	 echo "psxy $TEMP/PlateMotionTraj$MotionPlates.gmt" $NL         >> $TEMP/GmtScript  
+	 echo "   "$GMTPaperOrien -O -K -M $MotionTrajPen           $NL >> $TEMP/GmtScript
+	 echo "   "$GMTProjection $GMTRange                         $NL >> $TEMP/GmtScript
+	 echo "   "$GMTVerb -H0                          " >>" $PsName  >> $TEMP/GmtScript
+	 echo " "                                                       >> $TEMP/GmtScript
+       endif
+      endif
+
+      # NO DIRECTION SYMBOLS, POINTS (for example EARTHQUAKES):
+      if (!($?Points)) then
+       set Points = "n"
+      endif  
+      if ($Points != "n" && $Points != "no") then
+       echo "# NO DIRECTION SYMBOLS, POINTS  (or EARTHQUAKES)"    >> $TEMP/GmtScript 
+
+       set PointSymbol = (`more $TEMP/PointSymbol`)
+       set PointSymbPenSiz = (`more $TEMP/PointSymbPenSiz`)
+       set PointSymbPenCol = (`more $TEMP/PointSymbPenCol`)
+       set PointSymbFilCol = (`more $TEMP/PointSymbFilCol`)
+       set PointSymbFilCpt = (`more $TEMP/PointSymbFilCpt`)
+       set PointSymbCpt = (`more $TEMP/PointSymbCpt`)
+
+       foreach PointData (`more $TEMP/PointData`)
+
+	# skip the PointData file if PointData is set to "no"
+	if ($PointData == "no") then
+	  echo -n ""
+	else 
+	 set PointSymbPenAttri = $PointSymbPenSiz[1]"/"$PointSymbPenCol[1]  
+
+	 echo "# points from $PointData"                           >> $TEMP/GmtScript 
+	 echo psxy $PointData $GMTRange $GMTProjection $NL >> $TEMP/GmtScript
+	 #echo "   "$GMTPaperOrien -O -K -W$PointSymbPenAttri   $NL >> $TEMP/GmtScript
+	 #echo "   "-G$PointSymbFilCol[1]  -L                   $NL >> $TEMP/GmtScript
+	 if ($PointSymbFilCpt[1] == "yes" || $PointSymbFilCpt[1] == "y") then 
+	     echo "   "$GMTPaperOrien -O -K                     $NL >> $TEMP/GmtScript
+	     echo "   "-C$PointSymbCpt[1]                     $NL >> $TEMP/GmtScript
+	 else
+	     echo "   "$GMTPaperOrien -O -K -W$PointSymbPenAttri   $NL >> $TEMP/GmtScript
+	     echo "   "-G$PointSymbFilCol[1]  -L                   $NL >> $TEMP/GmtScript
+	 endif
+	 echo "   "$GMTVerb -H1 -S$PointSymbol[1] " >>" $PsName    >> $TEMP/GmtScript
+	 echo " "                                                  >> $TEMP/GmtScript
+
+	 shift PointSymbPenSiz
+	 shift PointSymbPenCol
+	 shift PointSymbFilCol
+	 shift PointSymbFilCpt
+	 shift PointSymbCpt
+	 shift PointSymbol
+	endif
+
+       end
+
+       unset PointData
+       unset PointSymbol
+       unset PointSymbPenSiz
+       unset PointSymbPenCol
+       unset PointSymbFilCol
+       unset PointSymbFilCpt
+       unset PointSymbCpt
+
+      endif
+
+
+      # SYMBOLS WITH LABELS:
+      # check if Names are defined
+      if (!($?Names)) then
+	 set Names = "n"
+      endif
+      if ($Names != "n" && $Names != "no") then
+       echo "# SYMBOLS WITH LABELS: LOCATIONS and NAMES "         >> $TEMP/GmtScript 
+
+       set NameSymbol = (`more $TEMP/NameSymbol`)
+       set NameSymbPenSiz = (`more $TEMP/NameSymbPenSiz`)
+       set NameSymbPenCol = (`more $TEMP/NameSymbPenCol`)
+       set NameSymbFilCol = (`more $TEMP/NameSymbFilCol`)
+       set NameTextPenCol = (`more $TEMP/NameTextPenCol`)
+       set NameTextFontSiz = (`more $TEMP/NameTextFontSiz`)
+       set NameXShift = (`more $TEMP/NameXShift`)
+       set NameYShift = (`more $TEMP/NameYShift`)
+
+       foreach NameData (`more $TEMP/NameData`)
+
+	# skip the NameData file if NameData is set to "no"
+	if ($NameData == "no") then
+	  echo ""
+	else 
+	 # this is the name for the temporary prepared names file, also used in 
+	 # CreateNameFile
+	 set TempNameData = $NameData:t
+
+	 set NameSymbPenAttri = $NameSymbPenSiz[1]"/"$NameSymbPenCol[1]  
+
+	 echo "# Symbols from $NameData"                                   >> $TEMP/GmtScript 
+	 echo psxy $TEMP"/$TempNameData".lonlat $GMTProjection $NL >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien -O -K -W$NameSymbPenAttri            $NL >> $TEMP/GmtScript
+	 echo "   "-G$NameSymbFilCol[1]  $GMTRange                     $NL >> $TEMP/GmtScript
+	 echo "   "$GMTVerb  -H1 -L -S$NameSymbol[1]        " >>" $PsName  >> $TEMP/GmtScript
+	 echo " "                                                          >> $TEMP/GmtScript
+
+
+	 echo "# Text from $NameData"                                      >> $TEMP/GmtScript 
+	 echo pstext $TEMP"/$TempNameData".readyforgmt $GMTLinRange $NL >> $TEMP/GmtScript
+	 echo "   "$GMTLinProj $GMTPaperOrien -O -K                      $NL >> $TEMP/GmtScript
+	 echo "   "-G$NameTextPenCol[1] $GMTVerb  -H1           ">>" $PsName >> $TEMP/GmtScript
+	 echo " "                                                            >> $TEMP/GmtScript
+	endif
+
+	shift NameSymbPenSiz
+	shift NameSymbPenCol
+	shift NameSymbFilCol
+	shift NameSymbol
+	shift NameTextPenCol
+       end
+
+       unset NameData
+       unset NameSymbol
+       unset NameSymbPenSiz 
+       unset NameSymbPenCol 
+       unset NameSymbFilCol 
+       unset NameTextPenCol
+       unset NameTextFontSiz
+       unset NameXShift
+       unset NameYShift
+
+      endif
+
+
+      # TEXT:
+      if (!($?Text)) then
+       set Text = "n"
+      endif  
+      if ($Text == "y" || $Text == "yes") then
+       echo "# TEXT: "                                          >> $TEMP/GmtScript 
+
+       if ($TextRecFil == "no") then 
+	  set TextRecStr = " "
+       else 
+	  set set TextRecStr = "-W$TextRecFil "   
+       endif
+
+       echo pstext $TextData $GMTRange -C$TextRecCle            $NL >> $TEMP/GmtScript
+       echo "   "$GMTProjection $GMTPaperOrien -O -K                 $NL >> $TEMP/GmtScript
+       echo "   "-G$TextFilCol $GMTVerb -N -H1 $TextRecStr  ">>" $PsName >> $TEMP/GmtScript
+       echo " "                                                          >> $TEMP/GmtScript
+      endif 
+
+
+      # SMOOTHED STRESS DATA
+      # TRAJECTORIES:
+      if (!($?SmoothTraj)) then
+       set SmoothTraj = "n"
+      endif  
+      if ($SmoothTraj == "y") then
+
+       if (!($?SmInfo)) then
+	 set SmInfo = "n"
+       endif 
+       if ($SmInfo == "y") then 
+	 # extract parameters used for smoothing, first line in .trjs file
+	 set SmInfoString = `head -n1 $SmTrajData`
+       endif 
+
+       if (!($?trajcpt)) then
+	 set trajcpt = 0
+       endif
+
+       if ($trajcpt == 0) then
+	 # trajectories are plotted with one color
+	 echo "# SMOOTHED DATA: Trajectories"                              >> $TEMP/GmtScript
+	 echo psxy $SmTrajData $GMTRange -O -K                 $NL >> $TEMP/GmtScript
+	 echo "   "$GMTProjection $GMTPaperOrien $GMTVerb -H1          $NL >> $TEMP/GmtScript
+	 echo "   "-W$SmTrajDataSiz/$SmTrajDataCol -M         ">>" $PsName >> $TEMP/GmtScript
+	 echo " "                                                          >> $TEMP/GmtScript
+       else
+	 # trajectories have been split up in PrepareTrajStressData and are plotted 
+	 # in different colors
+	 set line = 1
+	 while ($line <=  $trajlines)
+	   set TrajCol = `awk -v line=$line '{if (NR==line) {print $2"/"$3"/"$4}}' $TEMP/traj.cpt`
+
+	   echo "# SMOOTHED DATA: Trajectories"                              >> $TEMP/GmtScript
+	   echo psxy $TEMP/TrajData$line.gmt $GMTRange -O -K     $NL >> $TEMP/GmtScript
+	   echo "   "$GMTProjection $GMTPaperOrien $GMTVerb -H1          $NL >> $TEMP/GmtScript
+	   echo "   "-W$SmTrajDataSiz/$TrajCol -M               ">>" $PsName >> $TEMP/GmtScript
+	   echo " "                                                          >> $TEMP/GmtScript
+
+	   @ line++
+
+	 end  
+       endif
+      endif
+
+      # SMOOTHED DATA POINTS:
+      if (!($?SmoothData)) then
+       set SmoothData = "n"
+      endif  
+      if ($SmoothData == "y") then
+       set SmSmVector = "V"$SmSmDataT"/0.0/0.0"
+
+       if (!($?SmInfo)) then
+	 set SmInfo = "n"
+       endif 
+       if ($SmInfo == "y") then 
+	 # extract parameters used for smoothing, first line in .sdat file
+	 set SmInfoString = `head -n1 $SmSmData`
+       endif 
+
+       echo "# SMOOTHED DATA: Smoothed Datapoints"                       >> $TEMP/GmtScript
+       echo psxy $TEMP/SmSmData.gmt  $GMTRange -O -K         $NL >> $TEMP/GmtScript
+       echo "   "$GMTProjection $GMTPaperOrien $GMTVerb -H1  -L      $NL >> $TEMP/GmtScript
+       echo "   "-W1/$SmSmDataCol -S$SmSmVector                      $NL >> $TEMP/GmtScript
+       echo "   "-G$SmSmDataCol                             ">>" $PsName >> $TEMP/GmtScript
+       echo " "                                                          >> $TEMP/GmtScript
+      endif
+
+      # GRIDED MAPS:
+      if (!($?SmoothGridmap)) then
+       set SmoothGridmap = "n"
+      endif  
+      if ($SmoothGridmap == "y") then
+       set SmGridVector = "V"$SmGridDataT"/0.0/0.0"
+
+       if (!($?SmInfo)) then
+	 set SmInfo = "n"
+       endif 
+       if ($SmInfo == "y") then 
+	 # extract parameters used for smoothing, first line in .grdm file
+	 set SmInfoString = `head -n1 $SmGridData`
+       endif 
+
+       echo "# SMOOTHED DATA: Gridmap Data"                              >> $TEMP/GmtScript
+       echo psxy $TEMP/SmGridData.gmt  $GMTRange -O -K       $NL >> $TEMP/GmtScript
+       echo "   "$GMTProjection $GMTPaperOrien $GMTVerb -H1  -L      $NL >> $TEMP/GmtScript
+       echo "   "$SmGridDataCol -S$SmGridVector                      $NL >> $TEMP/GmtScript
+       echo "   "$SmGridDataFil $SmGridDataPen              ">>" $PsName >> $TEMP/GmtScript
+       echo " "                                                          >> $TEMP/GmtScript
+      endif
+
+      # INFO OF SMOOTHING OPTIONS:
+      if ($SmoothGridmap == "y" || $SmoothData == "y" || $SmoothTraj == "y" ) then
+	if ($SmInfo == "y") then
+	  if (!($?SmInfoOffset)) then
+	    set SmInfoOffset = 0.5
+	  endif 
+
+	  set SmInfoXPos = `awk -v x=$PlotWidth -v y=$SmInfoOffset 'BEGIN{val=x+y; print val}'`
+
+	  echo "# SMOOTH INFO STRING: "                                    >> $TEMP/GmtScript
+	  echo pstext  $GMTLinRange                               $NL >> $TEMP/GmtScript
+	  echo "   "$GMTLinProj $GMTPaperOrien -O -K                   $NL >> $TEMP/GmtScript
+	  echo "    -G0 $GMTVerb  -N              << END >>" $PsName       >> $TEMP/GmtScript
+	  echo "$SmInfoXPos 0 4 90.0 2 9 $SmInfoString"                    >> $TEMP/GmtScript
+	  echo "END"                                                       >> $TEMP/GmtScript
+	  echo " "                                                         >> $TEMP/GmtScript
+	endif                                                          
+      endif
+
+      ###########################
+      # SH: 6.Okt.98 ############
+      ###########################
+      # FE_Stress MAPS:
+      if (!($?FE_Stress)) then
+       set FE_Stress = "n"
+      endif
+      if ($FE_Stress == "y") then
+       set FE_StressVector = "V"$FE_StressDataT"/0.0/0.0"
+
+       echo "# FE_Stress DATA: Grid Data"                              >> $TEMP/GmtScript
+       echo psxy $TEMP/FE_StressData.gmt  $GMTRange -O -K       $NL >> $TEMP/GmtScript
+       echo "   "$GMTProjection $GMTPaperOrien $GMTVerb -H1  -L      $NL >> $TEMP/GmtScript
+       echo "   "$FE_StressDataCol -S$FE_StressVector                      $NL >> $TEMP/GmtScript
+       echo "   "$FE_StressDataFil $FE_StressDataPen              ">>" $PsName >> $TEMP/GmtScript
+       echo " "                                                          >> $TEMP/GmtScript
+       if ($FE_StressPlotSymbol == "y") then
+	  echo psxy $TEMP/FE_StressData.gmt  $GMTRange -O -K       $NL >> $TEMP/GmtScript
+	  echo "   "$GMTProjection $GMTPaperOrien $GMTVerb -H1  -L      $NL >> $TEMP/GmtScript
+	  echo "   "-W1/$FE_StressSymbolCol -S$FE_StressSymbol                      $NL >> $TEMP/GmtScript
+	  echo "   "-G$FE_StressSymbolColFil $FE_StressDataPen              ">>" $PsName >> $TEMP/GmtScript
+	  echo " " 
+       endif                                                         >> $TEMP/GmtScript
+      endif
+
+      # INFO OF SMOOTHING OPTIONS:
+      if ($SmoothGridmap == "y" || $SmoothData == "y" || $SmoothTraj == "y" ) then
+	if ($SmInfo == "y") then
+	  if (!($?SmInfoOffset)) then
+	    set SmInfoOffset = 0.5
+	  endif
+
+	  set SmInfoXPos = `awk -v x=$PlotWidth -v y=$SmInfoOffset 'BEGIN{val=x+y; print val}'`
+
+	  echo "# SMOOTH INFO STRING: "                                    >> $TEMP/GmtScript
+	  echo pstext  $GMTLinRange                               $NL >> $TEMP/GmtScript
+	  echo "   "$GMTLinProj $GMTPaperOrien -O -K                   $NL >> $TEMP/GmtScript
+	  echo "    -G0 $GMTVerb  -N              << END >>" $PsName       >> $TEMP/GmtScript
+	  echo "$SmInfoXPos 0 4 90.0 2 9 $SmInfoString"                    >> $TEMP/GmtScript
+	  echo "END"                                                       >> $TEMP/GmtScript
+	  echo " "                                                         >> $TEMP/GmtScript
+	endif
+      endif
+
+      # STRESS DATA:
+      if (!($?Stresses)) then
+       set Stresses = "n"
+      endif  
+      if ($Stresses == "y" || $Stresses == "yes") then
+       # stress symbols are plotted in linear xy projection. 
+       # Range for linear projection is the PlotWidth and PlotHeight calculated in
+       # former scripts.
+       #set NFFill = "-G255/255/255"
+       set NFFill = " "
+
+      ###########################
+      # SH: 14.Sept.98 ##########
+      ###########################
+       # determine if one or two StressData - files have to be plotted:
+       if ($Stress3Data != "no" && $Stress2Data != "no") then
+	set StressScript = "DefineStress1Data DefineStress2Data DefineStress3Data"
+       else if ($Stress2Data != "no") then
+	      set StressScript = "DefineStress1Data DefineStress2Data"
+       else  
+	set StressScript = "DefineStress1Data"
+       endif
+
+       foreach StressDefine ( $StressScript )
+
+	source $SCRIPTS/$StressDefine
+
+	set QualA_NF_poligons = ` more $TEMP_S/QualA_NF_poligons`
+	set QualA_SS_poligons = ` more $TEMP_S/QualA_SS_poligons`
+	set QualA_SS_semi_poli = ` more $TEMP_S/QualA_SS_semi_poli`
+	set QualA_TF_poligons = ` more $TEMP_S/QualA_TF_poligons`
+	set QualA_U_poligons  = ` more $TEMP_S/QualA_U_poligons`
+	set QualB_NF_poligons = ` more $TEMP_S/QualB_NF_poligons`
+	set QualB_SS_poligons = ` more $TEMP_S/QualB_SS_poligons`
+	set QualB_SS_semi_poli = ` more $TEMP_S/QualB_SS_semi_poli`
+	set QualB_TF_poligons = ` more $TEMP_S/QualB_TF_poligons`
+	set QualB_U_poligons  = ` more $TEMP_S/QualB_U_poligons`
+	set QualC_NF_poligons = ` more $TEMP_S/QualC_NF_poligons`
+	set QualC_SS_poligons = ` more $TEMP_S/QualC_SS_poligons`
+	set QualC_SS_semi_poli = ` more $TEMP_S/QualC_SS_semi_poli`
+	set QualC_TF_poligons = ` more $TEMP_S/QualC_TF_poligons`
+	set QualC_U_poligons  = ` more $TEMP_S/QualC_U_poligons`
+	set QualD_NF_poligons = ` more $TEMP_S/QualD_NF_poligons`
+	set QualD_SS_poligons = ` more $TEMP_S/QualD_SS_poligons`
+	set QualD_SS_semi_poli = ` more $TEMP_S/QualD_SS_semi_poli`
+	set QualD_TF_poligons = ` more $TEMP_S/QualD_TF_poligons`
+	set QualD_U_poligons  = ` more $TEMP_S/QualD_U_poligons`
+	set QualE_NF_poligons = ` more $TEMP_S/QualE_NF_poligons`
+	set QualE_SS_poligons = ` more $TEMP_S/QualE_SS_poligons`
+	set QualE_SS_semi_poli = ` more $TEMP_S/QualE_SS_semi_poli`
+	set QualE_TF_poligons = ` more $TEMP_S/QualE_TF_poligons`
+	set QualE_U_poligons  = ` more $TEMP_S/QualE_U_poligons`
+
+
+	echo "# STRESS DATA:"                                                   >> $TEMP/GmtScript
+
+	if ($SQualE == "y") then
+	 # E-QUALITY: FocalMechanism and/or HydroFrac and/or GeologicalIndicaters 
+	 # and/or BoreholeBreakouts (poligons)   
+	 if ($STypeFMS == "y" || $STypeFMA == "y" || $STypeFMF == "y" || $STypeHF == "y" || $STypeGI == "y" || $STypeBO == "y" || $STypeDIF == "y") then
+	  echo "# E-QUALITY: FocalMechanism and/or HydroFrac and/or GeologicalIndicaters and/or BoreholeBreakouts (poligons)" >> $TEMP/GmtScript
+	  echo psxy $QualE_U_poligons $GMTLinRange $GMTLinProj -O -K  $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M  -L                     $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualET/$SDataUColor                    ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $QualE_TF_poligons $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M  -L                     $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualET/$SDataTFColor -G$SDataTFColor   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $QualE_SS_poligons $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M  -L                     $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualET/$SDataSSColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $QualE_SS_semi_poli $NL                            >> $TEMP/GmtScript
+	  echo "   "$GMTLinRange $GMTLinProj $GMTPaperOrien -O -K $GMTVerb $NL >> $TEMP/GmtScript
+	  echo "   "-H1 -M -W$SQualET/$SDataSSColor  -G$SDataSSColor -L  ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $QualE_NF_poligons $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M  -L                     $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualET/$SDataNFColor  $NFFill          ">>" $PsName >> $TEMP/GmtScript
+	  echo " "                                                             >> $TEMP/GmtScript
+	 endif
+
+	 if ($STypeOC == "y" || $STypeBS == "y") then
+	  echo "# E-QUALITY: OverCoring symbols"                               >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/oc_E_U $GMTLinRange $GMTLinProj -O -K  $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualET/$SDataUColor                    ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/oc_E_TF $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualET/$SDataTFColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/oc_E_SS $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualET/$SDataSSColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/oc_E_NF $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualET/$SDataNFColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo " "                                                             >> $TEMP/GmtScript
+	  echo "# E-QUALITY: OverCoring symbols"                               >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/bs_E_U $GMTLinRange $GMTLinProj -O -K  $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualET/$SDataUColor                    ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/bs_E_TF $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualET/$SDataTFColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/bs_E_SS $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualET/$SDataSSColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/bs_E_NF $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualET/$SDataNFColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo " "                                                             >> $TEMP/GmtScript
+	 endif
+
+	endif
+
+	if ($SQualD == "y") then
+	 # D-QUALITY: FocalMechanism and/or HydroFrac and/or GeologicalIndicaters 
+	 # and/or BoreholeBreakouts (poligons)   
+	 if ($STypeFMS == "y" || $STypeFMA == "y" || $STypeFMF == "y" || $STypeHF == "y" || $STypeGI == "y" || $STypeBO == "y" || $STypeDIF == "y") then
+	  echo "# D-QUALITY: FocalMechanism and/or HydroFrac and/or GeologicalIndicaters and/or BoreholeBreakouts (poligons)" >> $TEMP/GmtScript
+	  echo psxy $QualD_U_poligons $GMTLinRange $GMTLinProj -O -K  $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M  -L                     $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualDT/$SDataUColor                    ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $QualD_TF_poligons $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M  -L                     $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualDT/$SDataTFColor -G$SDataTFColor   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $QualD_SS_poligons $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M  -L                     $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualDT/$SDataSSColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $QualD_SS_semi_poli $NL                            >> $TEMP/GmtScript
+	  echo "   "$GMTLinRange $GMTLinProj $GMTPaperOrien -O -K $GMTVerb $NL >> $TEMP/GmtScript
+	  echo "   "-H1 -M -W$SQualDT/$SDataSSColor  -G$SDataSSColor -L  ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $QualD_NF_poligons $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M  -L                     $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualDT/$SDataNFColor  $NFFill          ">>" $PsName >> $TEMP/GmtScript
+	  echo " "                                                             >> $TEMP/GmtScript
+	 endif
+
+	 if ($STypeOC == "y" || $STypeBS == "y") then
+	  echo "# D-QUALITY: OverCoring symbols"                               >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/oc_D_U $GMTLinRange $GMTLinProj -O -K  $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualDT/$SDataUColor                    ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/oc_D_TF $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualDT/$SDataTFColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/oc_D_SS $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualDT/$SDataSSColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/oc_D_NF $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualDT/$SDataNFColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo " "                                                             >> $TEMP/GmtScript
+	  echo "# D-QUALITY: OverCoring symbols"                               >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/bs_D_U $GMTLinRange $GMTLinProj -O -K  $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualDT/$SDataUColor                    ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/bs_D_TF $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualDT/$SDataTFColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/bs_D_SS $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualDT/$SDataSSColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/bs_D_NF $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualDT/$SDataNFColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo " "                                                             >> $TEMP/GmtScript
+	 endif
+
+	endif
+
+	if ($SQualC == "y") then
+	# C-QUALITY: FocalMechanism and/or HydroFrac and/or GeologicalIndicaters 
+	# and/or BoreholeBreakouts(poligons)
+	 if ($STypeFMS == "y" || $STypeFMA == "y" || $STypeFMF == "y" || $STypeHF == "y" || $STypeGI == "y" || $STypeBO == "y" || $STypeDIF == "y") then
+	  echo "# C-QUALITY: FocalMechanism and/or HydroFrac and/or GeologicalIndicaters and/or BoreholeBreakouts(poligons)" >> $TEMP/GmtScript
+	  echo psxy $QualC_U_poligons $GMTLinRange $GMTLinProj -O -K  $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M  -L                     $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualCT/$SDataUColor                    ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $QualC_TF_poligons $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M  -L                     $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualCT/$SDataTFColor -G$SDataTFColor   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $QualC_SS_poligons $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M  -L                     $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualCT/$SDataSSColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $QualC_SS_semi_poli                               $NL >> $TEMP/GmtScript
+	  echo "   "$GMTLinRange $GMTLinProj $GMTPaperOrien -O -K $GMTVerb $NL >> $TEMP/GmtScript
+	  echo "   "-H1 -M -W$SQualCT/$SDataSSColor  -G$SDataSSColor -L  ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $QualC_NF_poligons $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M  -L                     $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualCT/$SDataNFColor  $NFFill          ">>" $PsName >> $TEMP/GmtScript
+	  echo " "                                                             >> $TEMP/GmtScript
+	 endif
+
+	 if ($STypeOC == "y" || $STypeBS == "y") then
+	  echo "# C-QUALITY: OverCoring symbols"                               >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/oc_C_U $GMTLinRange $GMTLinProj -O -K     $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualCT/$SDataUColor                    ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/oc_C_TF $GMTLinRange $GMTLinProj -O -K    $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualCT/$SDataTFColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/oc_C_SS $GMTLinRange $GMTLinProj -O -K    $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualCT/$SDataSSColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/oc_C_NF $GMTLinRange $GMTLinProj -O -K    $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualCT/$SDataNFColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo " "                                                             >> $TEMP/GmtScript
+	  echo "# C-QUALITY: OverCoring symbols"                               >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/bs_C_U $GMTLinRange $GMTLinProj -O -K     $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualCT/$SDataUColor                    ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/bs_C_TF $GMTLinRange $GMTLinProj -O -K    $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualCT/$SDataTFColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/bs_C_SS $GMTLinRange $GMTLinProj -O -K    $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualCT/$SDataSSColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/bs_C_NF $GMTLinRange $GMTLinProj -O -K    $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualCT/$SDataNFColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo " "                                                             >> $TEMP/GmtScript
+	 endif
+
+	endif
+
+	if ($SQualB == "y") then
+	 # B-QUALITY: FocalMechanism and/or HydroFrac and/or GeologicalIndicaters 
+	 # and/or BoreholeBreakouts(poligons)" >> $TEMP/GmtScript
+	 if ($STypeFMS == "y" || $STypeFMA == "y" || $STypeFMF == "y" || $STypeHF == "y" || $STypeGI == "y" || $STypeBO == "y" || $STypeDIF == "y" ) then
+	  echo "# B-QUALITY: FocalMechanism and/or HydroFrac and/or GeologicalIndicaters and/or BoreholeBreakouts(poligons)" >> $TEMP/GmtScript
+	  echo psxy $QualB_U_poligons $GMTLinRange $GMTLinProj -O -K  $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M  -L                     $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualBT/$SDataUColor                    ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $QualB_TF_poligons $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M  -L                    $NL  >> $TEMP/GmtScript
+	  echo "   "-W$SQualBT/$SDataTFColor -G$SDataTFColor   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $QualB_SS_poligons $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M  -L                     $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualBT/$SDataSSColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $QualB_SS_semi_poli $NL                               >> $TEMP/GmtScript
+	  echo "   "$GMTLinRange $GMTLinProj $GMTPaperOrien -O -K $GMTVerb $NL >> $TEMP/GmtScript
+	  echo "   "-H1 -M -W$SQualBT/$SDataSSColor  -G$SDataSSColor -L  ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $QualB_NF_poligons $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M  -L                     $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualBT/$SDataNFColor  $NFFill          ">>" $PsName >> $TEMP/GmtScript
+	  echo " "                                                             >> $TEMP/GmtScript
+	 endif
+
+	 if ($STypeOC == "y" || $STypeBS == "y") then
+	  echo "# B-QUALITY: OverCoring symbols"                               >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/oc_B_U $GMTLinRange $GMTLinProj -O -K  $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualBT/$SDataUColor                    ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/oc_B_TF $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualBT/$SDataTFColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/oc_B_SS $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualBT/$SDataSSColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/oc_B_NF $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualBT/$SDataNFColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo " "                                                             >> $TEMP/GmtScript
+	  echo "# B-QUALITY: OverCoring symbols"                               >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/bs_B_U $GMTLinRange $GMTLinProj -O -K  $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualBT/$SDataUColor                    ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/bs_B_TF $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualBT/$SDataTFColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/bs_B_SS $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualBT/$SDataSSColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/bs_B_NF $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualBT/$SDataNFColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo " "                                                             >> $TEMP/GmtScript
+	 endif
+
+	endif
+
+	if ($SQualA == "y") then
+	 # A-QUALITY: FocalMechanism || HydroFrac and/or GeologicalIndicaters and/or 
+	 # BoreholeBreakouts (poligons)
+	 if ($STypeFMS == "y" || $STypeFMA == "y" || $STypeFMF == "y" || $STypeHF == "y" || $STypeGI == "y" || $STypeBO == "y" || $STypeDIF == "y" ) then
+	  echo "# A-QUALITY: FocalMechanism || HydroFrac and/or GeologicalIndicaters and/or BoreholeBreakouts (poligons)" >> $TEMP/GmtScript
+	  echo psxy $QualA_U_poligons $GMTLinRange $GMTLinProj -O -K  $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M  -L                     $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualAT/$SDataUColor                    ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $QualA_TF_poligons $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M  -L                     $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualAT/$SDataTFColor -G$SDataTFColor   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $QualA_SS_poligons $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M  -L                     $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualAT/$SDataSSColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $QualA_SS_semi_poli $NL                               >> $TEMP/GmtScript
+	  echo "   "$GMTLinRange $GMTLinProj $GMTPaperOrien -O -K $GMTVerb $NL >> $TEMP/GmtScript
+	  echo "   "-H1 -M -W$SQualAT/$SDataSSColor  -G$SDataSSColor -L  ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $QualA_NF_poligons $GMTLinRange $GMTLinProj -O -K $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M  -L                     $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualAT/$SDataNFColor  $NFFill          ">>" $PsName >> $TEMP/GmtScript
+	  echo " "                                                             >> $TEMP/GmtScript
+	 endif
+
+	 if ($STypeOC == "y" || $STypeBS == "y") then
+	  echo "# A-QUALITY: OverCoring symbols"                               >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/oc_A_U $GMTLinRange $GMTLinProj -O -K     $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualAT/$SDataUColor                    ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/oc_A_TF $GMTLinRange $GMTLinProj -O -K    $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualAT/$SDataTFColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/oc_A_SS $GMTLinRange $GMTLinProj -O -K    $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualAT/$SDataSSColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/oc_A_NF $GMTLinRange $GMTLinProj -O -K    $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualAT/$SDataNFColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo " "                                                             >> $TEMP/GmtScript
+	  echo "# A-QUALITY: OverCoring symbols"                               >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/bs_A_U $GMTLinRange $GMTLinProj -O -K     $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualAT/$SDataUColor                    ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/bs_A_TF $GMTLinRange $GMTLinProj -O -K    $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualAT/$SDataTFColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/bs_A_SS $GMTLinRange $GMTLinProj -O -K    $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualAT/$SDataSSColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo psxy $TEMP_S/bs_A_NF $GMTLinRange $GMTLinProj -O -K    $NL >> $TEMP/GmtScript
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -M                         $NL >> $TEMP/GmtScript
+	  echo "   "-W$SQualAT/$SDataNFColor                   ">>" $PsName >> $TEMP/GmtScript
+	  echo " "                                                             >> $TEMP/GmtScript
+	 endif
+
+	endif
+
+	# SITECODE for STRESS DATA
+	if ($StressSC == "y") then
+	  echo "# STRESS SITECODE information"                                 >> $TEMP/GmtScript
+	  echo pstext $TEMP_S/sitecode.gmt $GMTLinRange $GMTLinProj   $NL >> $TEMP/GmtScript 
+	  echo "   "$GMTPaperOrien $GMTVerb -H1 -O -K -G$StressSCCol ">>" $PsName >> $TEMP/GmtScript
+	endif
+       end
+
+      endif
+
+      endif
+
+      # psmeca - added 1.11.02 JH
+      if (!($?PlotCMT)) then
+	 set PlotCMT = n
+      endif
+      if ($PlotCMT == "y") then
+	  set CMTPlotType = "-S$CMTPlotType$CMTScale"c/"$CMTFontSize/$CMTOffset"
+
+	  # setting rest of options
+	  echo "#CMT Solutions"                               >> $TEMP/GmtScript
+	  echo "psmeca $CMTFile $GMTRange $GMTProjection $NL" >> $TEMP/GmtScript
+	  echo " -O -K $CMTPlotType -H$CMTHeader -G$CMTThrustFill $NL" >> $TEMP/GmtScript
+	  echo "-E$CMTExtFill $NL >> $PsName"                     >> $TEMP/GmtScript
+      endif
+
+
+      if ($Stresses == "y" || $Stresses == "yes") then
+       if ($StressLegend == "y") then 
+       # STRESS LEGEND:
+       # the text for the stress legend is written in the script CreateStressLegend
+
+	 source $SCRIPTS/DefineStress1Data
+
+	 set GMTSLegRange = -R0/$StressLegWidth/0/$StressLegHeight
+	 set SLegOutLine = "-G$StressLegBackgr -W10/0/0/0"
+
+	 # new origin:
+	 set GMTSLegOrigin = "-X"$StressLegXShift" -Y"$StressLegYShift
+
+
+	 echo "# STRESS LEGEND: "                                   >> $TEMP/GmtScript
+	 echo "# create background rectangle"                       >> $TEMP/GmtScript
+	 echo psxy $GMTSLegRange -Jx1 -L $GMTSLegOrigin $NL >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien $SLegOutLine $GMTVerb -O -K   $NL >> $TEMP/GmtScript
+	 echo "                     << END >>" $PsName              >> $TEMP/GmtScript
+	 echo 0"   "0                                               >> $TEMP/GmtScript
+	 echo $StressLegWidth"   "0                                 >> $TEMP/GmtScript
+	 echo $StressLegWidth"   "$StressLegHeight                  >> $TEMP/GmtScript
+	 echo 0"   "$StressLegHeight                                >> $TEMP/GmtScript
+	 echo "END"                                                 >> $TEMP/GmtScript
+	 echo " "                                                   >> $TEMP/GmtScript
+	 echo "# write text in stress legend"                       >> $TEMP/GmtScript
+	 echo pstext $TEMP/StressLegend.text $GMTSLegRange $NL >> $TEMP/GmtScript
+	 echo "   "-Jx1 -O -K  $GMTPaperOrien $GMTVerb ">>" $PsName >> $TEMP/GmtScript
+	 echo " "                                                   >> $TEMP/GmtScript
+	 echo "# write symbols in stress legend"                    >> $TEMP/GmtScript
+	 echo psxy $TEMP/LegFMSSymb $GMTSLegRange -Jx1  $NL >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien $GMTVerb -H1 -M -L -O -K     $NL >> $TEMP/GmtScript
+	 echo "   "-W$SQualBT/$SDataUColor         ">>" $PsName  >> $TEMP/GmtScript
+
+	 echo psxy $TEMP/LegHFGISymb $GMTSLegRange -Jx1 $NL >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien $GMTVerb -H1 -M  -L  -O -K    $NL >> $TEMP/GmtScript
+	 echo "   "-W$SQualBT/$SDataUColor          ">>" $PsName >> $TEMP/GmtScript
+	 echo " "                                                   >> $TEMP/GmtScript
+
+	 echo psxy $TEMP/LegBOSymb $GMTSLegRange -Jx1   $NL >> $TEMP/GmtScript 
+	 echo "   "$GMTPaperOrien $GMTVerb -H1 -M -L -O -K $NL >> $TEMP/GmtScript
+	 echo "   "-W$SQualBT/$SDataUColor     ">>" $PsName >> $TEMP/GmtScript
+	 echo "   "                                                 >> $TEMP/GmtScript
+
+	 echo psxy $TEMP/LegDIFSymb $GMTSLegRange -Jx1   $NL >> $TEMP/GmtScript 
+	 echo "   "$GMTPaperOrien $GMTVerb -H1 -M -L -O -K $NL >> $TEMP/GmtScript
+	 echo "   "-W$SQualBT/$SDataUColor     ">>" $PsName >> $TEMP/GmtScript
+	 echo "   "                                                 >> $TEMP/GmtScript
+
+	 echo psxy $TEMP/LegBSSymb $GMTSLegRange -Jx1   $NL >> $TEMP/GmtScript 
+	 echo "   "$GMTPaperOrien $GMTVerb -H1 -M -O -K $NL >> $TEMP/GmtScript
+	 echo "   "-W$SQualBT/$SDataUColor     ">>" $PsName >> $TEMP/GmtScript
+	 echo "   "                                                 >> $TEMP/GmtScript
+
+	 echo psxy $TEMP/LegOCSymb $GMTSLegRange -Jx1   $NL >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien $GMTVerb -H1 -M -O -K         $NL >> $TEMP/GmtScript
+	 echo "   "-W$SQualBT/$SDataUColor          ">>" $PsName >> $TEMP/GmtScript
+	 echo " "                                                   >> $TEMP/GmtScript
+
+	 echo psxy $TEMP/LegLineE  $GMTSLegRange -Jx1 -O -K $NL >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien $GMTVerb  -M  -H1                 $NL >> $TEMP/GmtScript
+	 echo "   "-W$SQualET/$SDataUColor              ">>" $PsName >> $TEMP/GmtScript
+	 echo " "                                                       >> $TEMP/GmtScript
+
+	 echo psxy $TEMP/LegLineD  $GMTSLegRange -Jx1 -O -K $NL >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien $GMTVerb  -M  -H1                 $NL >> $TEMP/GmtScript
+	 echo "   "-W$SQualDT/$SDataUColor              ">>" $PsName >> $TEMP/GmtScript
+	 echo " "                                                       >> $TEMP/GmtScript
+
+	 echo psxy $TEMP/LegLineC  $GMTSLegRange -Jx1 -O -K $NL >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien $GMTVerb  -M  -H1                 $NL >> $TEMP/GmtScript
+	 echo "   "-W$SQualCT/$SDataUColor              ">>" $PsName >> $TEMP/GmtScript
+	 echo " "                                                       >> $TEMP/GmtScript
+
+	 echo psxy $TEMP/LegLineB  $GMTSLegRange -Jx1 -O -K $NL >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien $GMTVerb  -M  -H1                 $NL >> $TEMP/GmtScript
+	 echo "   "-W$SQualBT/$SDataUColor              ">>" $PsName >> $TEMP/GmtScript
+	 echo " "                                                       >> $TEMP/GmtScript
+
+	 echo psxy $TEMP/LegLineA  $GMTSLegRange -Jx1 -O -K $NL >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien $GMTVerb  -M  -H1                 $NL >> $TEMP/GmtScript
+	 echo "   "-W$SQualAT/$SDataUColor              ">>" $PsName >> $TEMP/GmtScript
+	 echo " "                                                       >> $TEMP/GmtScript
+
+	 echo psxy $TEMP/LegNFSymbol  $GMTSLegRange -Jx1 -O -K $NL >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien $GMTVerb -H1 -M  -L                  $NL >> $TEMP/GmtScript
+	 echo "   "-W$SQualAT/$SDataNFColor  $NFFill       ">>" $PsName >> $TEMP/GmtScript
+	 echo " "                                                          >> $TEMP/GmtScript
+	 echo psxy $TEMP/LegSSSymbol  $GMTSLegRange -Jx1 -O -K $NL >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien $GMTVerb -H1 -M -L                  $NL >> $TEMP/GmtScript
+	 echo "   "-W$SQualAT/$SDataSSColor                ">>" $PsName >> $TEMP/GmtScript
+	 echo " "                                                          >> $TEMP/GmtScript
+	 echo psxy $TEMP/LegSSsemiSymbol $NL                       >> $TEMP/GmtScript
+	 echo "   "$GMTSLegRange -Jx1 $GMTPaperOrien -O -K $GMTVerb    $NL >> $TEMP/GmtScript
+	 echo "   "-H1 -M -W$SQualAT/$SDataSSColor  -G$SDataSSColor -L ">>" $PsName >> $TEMP/GmtScript
+	 echo " "                                                          >> $TEMP/GmtScript
+	 echo psxy $TEMP/LegTFSymbol  $GMTSLegRange -Jx -O -K $NL  >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien $GMTVerb -H1 -M -L                 $NL  >> $TEMP/GmtScript
+	 echo "   "-W$SQualAT/$SDataTFColor -G$SDataTFColor ">>" $PsName >> $TEMP/GmtScript
+	 echo " "                                                          >> $TEMP/GmtScript
+	 echo psxy $TEMP/LegUSymbol  $GMTSLegRange -Jx1 -O -K  $NL >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien $GMTVerb -H1 -M -L                  $NL >> $TEMP/GmtScript
+	 echo "   "-W$SQualAT/$SDataUColor                 ">>" $PsName >> $TEMP/GmtScript
+	 echo " "                                                          >> $TEMP/GmtScript
+	 echo " "                                                          >> $TEMP/GmtScript
+
+	 # reset origin:
+	 set GMTOiginOrigin = "-X-"$StressLegXShift" -Y-"$StressLegYShift
+	 echo "# Print dummy circle reset origin changed by stress legend "  >> $TEMP/GmtScript 
+	 echo psxy $GMTRange $GMTProjection -O -K -L -Sc0.01     $NL >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien   $GMTOiginOrigin  -G255/20/100        $NL >> $TEMP/GmtScript
+	 echo "   -W1p/0/0/0 << END >>" $PsName                              >> $TEMP/GmtScript
+	 echo $c1_lon"   "$c1_lat                                            >> $TEMP/GmtScript
+	 echo "END"                                                          >> $TEMP/GmtScript
+	 echo " "                                                            >> $TEMP/GmtScript
+
+       endif
+      endif   
+
+
+      # SCALEBAR for GRIDFILE:
+      # check if GridScale is defined
+      if (!($?GridScale)) then
+	 set GridScale = "n"
+      endif
+
+      # Scale for Grid file:
+      if ($GridScale == "y" ) then
+	 echo "# SCALEBAR for GRIDFILE:"                                     >> $TEMP/GmtScript 
+
+	 if ($GridScaleOri == "h") then
+	   set GridH = "h"
+	 else 
+	   set GridH = " " 
+	 endif
+
+	 if (!($?GridScaleSpac)) then 
+	    set GridScaleSpac = " "
+	 endif
+
+      #  CHANGED this section 3/4/98 V. Wehrle
+      #  This section doesn't work on LINUX cshell
+      #  this shell doesn't like the - sign in the string
+      #  to maintain compatibility with old scripts an awk script 
+      #  is used to check the string ... 
+      #   if ($GridScaleSpac == "-L") then
+      #      set GridScaleLStr = "-L"
+      #   else 
+      #      set GridScaleLStr = " "
+      #   endif
+
+
+	 echo $GridScaleSpac 'stringequal' "-L" > $TEMP/check  
+	 set Check = `awk -f $SCRIPTS/comp.awk $TEMP/check`
+	 if ($Check == "true") then
+	    set GridScaleLStr = "-L"
+	 else 
+	    set GridScaleLStr = " "
+	 endif     
+
+      # end of Changed section
+
+	 # create string for positon and width of scale
+	 set GridScaleDStr = \
+	 "-D$GridScaleX/$GridScaleY/$GridScaleLen/$GridScaleWid/$GridH"
+
+	 # rectangle underlying scale bar.
+	 if ($GridScaleFil != "no") then
+	   # compute the corners of the rectangle
+	   if ($GridScaleOri == "h") then
+	     set GridScaleRx1 = `awk -v x=$GridScaleX -v ll=$GridScaleClLL -v sl=$GridScaleLen 'BEGIN{val=x-sl/2-ll; print val}'`
+	     set GridScaleRx2 = `awk -v x=$GridScaleX -v lr=$GridScaleClLR -v sl=$GridScaleLen 'BEGIN{val=x+sl/2+lr; print val}'`
+	     set GridScaleRy1 = `awk -v y=$GridScaleY -v wr=$GridScaleClWR -v sw=$GridScaleWid 'BEGIN{val=y-sw-wr; print val}'`
+	     set GridScaleRy2 = `awk -v y=$GridScaleY -v wl=$GridScaleClWL 'BEGIN{val=y+wl; print val}'`
+	   else 
+	     set GridScaleRx1 = `awk -v x=$GridScaleX -v wl=$GridScaleClWL 'BEGIN{val=x-wl; print val}'`
+	     set GridScaleRx2 = `awk -v x=$GridScaleX -v wr=$GridScaleClWR -v sw=$GridScaleWid 'BEGIN{val=x+sw+wr; print val}'`
+	     set GridScaleRy1 = `awk -v y=$GridScaleY -v ll=$GridScaleClLL -v sl=$GridScaleLen 'BEGIN{val=y-sl/2-ll; print val}'`
+	     set GridScaleRy2 = `awk -v y=$GridScaleY -v lr=$GridScaleClLR -v sl=$GridScaleLen 'BEGIN{val=y+sl/2+lr; print val}'`
+	   endif
+
+	   echo "# Plot rectangle beneath scale bar:"                 >> $TEMP/GmtScript 
+	   echo psxy $GMTLinRange $GMTLinProj -L          $NL >> $TEMP/GmtScript
+	   echo "   "$GMTPaperOrien  $GMTVerb -O -K               $NL >> $TEMP/GmtScript
+	   echo "    -G$GridScaleFil -W3/0/0/0  << END >>" $PsName    >> $TEMP/GmtScript
+	   echo $GridScaleRx1"   "$GridScaleRy1                       >> $TEMP/GmtScript
+	   echo $GridScaleRx2"   "$GridScaleRy1                       >> $TEMP/GmtScript
+	   echo $GridScaleRx2"   "$GridScaleRy2                       >> $TEMP/GmtScript
+	   echo $GridScaleRx1"   "$GridScaleRy2                       >> $TEMP/GmtScript
+	   echo "END"                                                 >> $TEMP/GmtScript
+	   echo " "                                                   >> $TEMP/GmtScript
+
+	 endif
+
+      # check which color palette table and resolution to use:
+      if ($Topography == "y") then
+	  if ($GridScaleFile == "topo" ) then
+	      set GridScaleFile = $TopoCptFile
+      #      set GridScaleRes = $TopoResolution
+	      set GridScaleRes = 30
+	  else if ($GridScaleFile == "grid" ) then
+	      set GridScaleFile = $GridCptFile
+	      set GridScaleRes = $GridResolution
+	  else 
+	    # plot with resolution of 50 dpi
+	      set GridScaleRes = 50
+	  endif   
+
+	  echo "# Plot scale for grid-file:"                     >> $TEMP/GmtScript 
+	  echo psscale  -C$GridScaleFile  $GridScaleDStr     \
+	      $GMTPaperOrien  $GMTVerb -O -K             $NL >> $TEMP/GmtScript
+	  echo "   "-B:'"'$GridScaleLab'"': $GridScaleLStr $NL >> $TEMP/GmtScript
+	  echo "   "               ">>" $PsName                >> $TEMP/GmtScript
+	  echo "  "                                              >> $TEMP/GmtScript
+	  endif
+      endif
+
+
+
+
+      # INSERT with OVERVIEW-MAP
+      # check if Insert is defined
+      if (!($?Insert)) then
+	 set Insert = "n"
+      endif
+
+      # The range, the projection and the shift with respect to ll corner of map
+      # were calculated in CalculateInsert. Up to now the ll corner has the 
+      # coordinates 0/0. Thus we just have to add the shift to get the new coordinates
+      # for the inserted map. Once set, this new origin is valid for all following
+      # print calls.
+      if ($Insert == "y") then
+	 # new origin:
+	 set GMTInsOrigin = "-X"$InsertXShift" -Y"$InsertYShift
+
+	 # filling for Continents
+	 set InsContFillStr = -G$ContinFillInsert
+
+	 # set Data Base to use: set to low, and min Area to plot, level to plot 2
+	 # otherwise England and the other large islands will be missing!
+	 set InsDataInfo = "-Dl -A1000/1"
+
+	 # set Coastline attributes:   
+	 set InsCoastlineStr = "-W"$CoastlineInsert
+
+	 # set Political boundaries attributes: 
+	 if (!($?ShowPolitInsert)) then
+	    set ShowPolitInsert = "n"
+	 endif  
+
+	 if ($ShowPolitInsert == "y") then  
+	    set InsPolitStr = "-N1/"$PolitBoundInsert
+	 else 
+	    set InsPolitStr = " "
+	 endif   
+
+	 # set outline for area showing the map area:   
+	 set MapOutlineIns = "-W2/0/0/0"
+
+	 # set outline for the frame:   
+	 set FrameOutlineIns = "-W10/0/0/0"
+
+	 # color for the map area is defined in the MasterScript (MapColorInsert)
+	 # add string -G here
+	 set MapColorIns = "-G"$MapColorInsert
+
+	 echo "# INSERTED OVERVIEW MAP SHOWING LOCATION OF MAP"     >> $TEMP/GmtScript 
+	 echo "# First print rectangle with the color of the ocean" >> $TEMP/GmtScript 
+	 echo psxy $GMTInsRange $GMTInsProject -O -K -L $NL >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien -G$OceanFillInsert -A         $NL >> $TEMP/GmtScript
+	 echo "   "$GMTInsOrigin $GMTVerb "<< END >>" $PsName       >> $TEMP/GmtScript
+	 echo $c1i_lon"   "$c1i_lat                                 >> $TEMP/GmtScript
+	 echo $c2i_lon"   "$c1i_lat                                 >> $TEMP/GmtScript
+	 echo $c2i_lon"   "$c2i_lat                                 >> $TEMP/GmtScript
+	 echo $c1i_lon"   "$c2i_lat                                 >> $TEMP/GmtScript
+	 echo "END"                                                 >> $TEMP/GmtScript
+	 echo " "                                                   >> $TEMP/GmtScript
+
+	 echo "# Second print rectangle showing the region of map"  >> $TEMP/GmtScript 
+	 echo "# with a fill defined by MapColorInsert "            >> $TEMP/GmtScript 
+	 echo psxy $GMTInsRange $GMTInsProject -O -K -L $NL >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien $MapColorIns $GMTVerb -A      $NL >> $TEMP/GmtScript
+	 echo "     << END >>" $PsName                              >> $TEMP/GmtScript
+	 echo $c1_lon"   "$c1_lat                                   >> $TEMP/GmtScript
+	 echo $c2_lon"   "$c1_lat                                   >> $TEMP/GmtScript
+	 echo $c2_lon"   "$c2_lat                                   >> $TEMP/GmtScript
+	 echo $c1_lon"   "$c2_lat                                   >> $TEMP/GmtScript
+	 echo "END"                                                 >> $TEMP/GmtScript
+	 echo " "                                                   >> $TEMP/GmtScript
+
+	 echo "# Third print coastlines and continents"             >> $TEMP/GmtScript 
+	 echo pscoast $GMTInsProject $GMTInsRange -O -K    $NL >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien $GMTVerb $InsDataInfo         $NL >> $TEMP/GmtScript
+	 echo "   "$InsContFillStr $InsPolitStr                 $NL  >> $TEMP/GmtScript
+	 echo "   "$InsCoastlineStr       ">>" $PsName              >> $TEMP/GmtScript
+	 echo " "                                                   >> $TEMP/GmtScript   
+
+	 echo "# Forth print rectangle showing the region of map"   >> $TEMP/GmtScript 
+	 echo "# no fill, outline is defined in CreateGmtScript"    >> $TEMP/GmtScript 
+	 echo psxy $GMTInsRange $GMTInsProject -O -K -L $NL >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien $MapOutlineIns $GMTVerb -A    $NL >> $TEMP/GmtScript
+	 echo "                   << END >>" $PsName                >> $TEMP/GmtScript
+	 echo $c1_lon"   "$c1_lat                                   >> $TEMP/GmtScript
+	 echo $c2_lon"   "$c1_lat                                   >> $TEMP/GmtScript
+	 echo $c2_lon"   "$c2_lat                                   >> $TEMP/GmtScript
+	 echo $c1_lon"   "$c2_lat                                   >> $TEMP/GmtScript
+	 echo "END"                                                 >> $TEMP/GmtScript
+	 echo " "                                                   >> $TEMP/GmtScript
+
+	 echo "# Fifth print rectangle as frame for insert "        >> $TEMP/GmtScript 
+	 echo psxy $GMTInsRange $GMTInsProject -O -K -L $NL >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien $FrameOutlineIns $GMTVerb -A  $NL >> $TEMP/GmtScript
+	 echo "                     << END >>" $PsName              >> $TEMP/GmtScript
+	 echo $c1i_lon"   "$c1i_lat                                 >> $TEMP/GmtScript
+	 echo $c2i_lon"   "$c1i_lat                                 >> $TEMP/GmtScript
+	 echo $c2i_lon"   "$c2i_lat                                 >> $TEMP/GmtScript
+	 echo $c1i_lon"   "$c2i_lat                                 >> $TEMP/GmtScript
+	 echo "END"                                                 >> $TEMP/GmtScript
+	 echo " "                                                   >> $TEMP/GmtScript
+
+	 # reset origin:
+	 set GMTOiginOrigin = "-X-"$InsertXShift" -Y-"$InsertYShift
+	 echo "# Print dummy circle reset origin changed by inserted map" >> $TEMP/GmtScript 
+	 echo psxy $GMTRange $GMTProjection -O -K -L -Sc0.01  $NL >> $TEMP/GmtScript
+	 echo "   "$GMTPaperOrien   $GMTOiginOrigin  -G255/20/100     $NL >> $TEMP/GmtScript
+	 echo "   -W1p/0/0/0 << END >>" $PsName                           >> $TEMP/GmtScript
+	 echo $c1_lon"   "$c1_lat                                         >> $TEMP/GmtScript
+	 echo "END"                                                       >> $TEMP/GmtScript
+	 echo " "                                                         >> $TEMP/GmtScript
+
+      endif
+
+
+      # MAP TITLE:
+      if (!($?PlotMapTitle)) then
+	 set PlotMapTitle = n
+      endif
+      if (!($?MapTitleRect)) then
+	 # set it to the default it had up to Release 2.21
+	 set MapTitleRect = 255/255/255o
+      endif
+
+      if ($PlotMapTitle == "y") then
+	 set MapTitleAlign = 9
+
+	 if ($MapTitleRect == "no") then 
+	   set MapTitleRectStr = " "
+	   # set clearing of text to 0.0
+	   set PlotMapCOpt = 0.0
+	   set PlotMapCStr = " "
+	 else 
+	   set set MapTitleRectStr = "-W$MapTitleRect"   
+	   # clearing of text and rectangle
+	   set PlotMapCOpt = 0.1
+	   set PlotMapCStr = -C$PlotMapCOpt/$PlotMapCOpt
+	 endif
+
+	 if ($MapTitleLoc == "default") then
+	    set MapTitleLoc = "0/$PlotHeight"
+	 else if ($MapTitleLoc == "above") then
+	    # reset alignment to be centered
+	    set MapTitleAlign = 10
+	    set MapTitleLocY = `awk -v offs=0.75 -v y=$PlotHeight 'BEGIN{y=y+offs; print y}'`
+	    set MapTitleLocX = `awk -v x=$PlotWidth 'BEGIN{x=x/2; print x}'`
+	    set MapTitleLoc = "$MapTitleLocX/$MapTitleLocY"
+	 endif
+
+	 # substract PlotMapCOpt from MapTitleLoc so that the box surrounding the
+	 # string is located propperly
+	 echo $MapTitleLoc > $TEMP/maptemp.loc
+	 set MapTitleLoc = `awk -F/ -v offs=$PlotMapCOpt '{x=$1+2*offs; y=$2-2*offs; print x" "y}' $TEMP/maptemp.loc `
+
+	 echo "# MAP TITLE:"                                              >> $TEMP/GmtScript
+	 echo pstext  $GMTLinRange $NL  >> $TEMP/GmtScript
+	 echo "   "$GMTLinProj $GMTPaperOrien -O -K $PlotMapCStr      $NL >> $TEMP/GmtScript
+	 echo "   "$MapTitleRectStr                                   $NL >> $TEMP/GmtScript
+	 echo "   "-G$MapTitleFontC $GMTVerb  -N    "<< END >>" $PsName   >> $TEMP/GmtScript
+	 echo "$MapTitleLoc $MapTitleFontS 0.0 0 $MapTitleAlign $MapTitle " >> $TEMP/GmtScript
+	 echo "END"                                                       >> $TEMP/GmtScript
+	 echo " "                                                         >> $TEMP/GmtScript
+
+      endif      
+
+
+
+
+      # WSM LOGO:
+      if ($?WSMLogo) then
+
+	 echo "# WSM LOGO:"                                               >> $TEMP/GmtScript
+	 echo pstext  $GMTLinRange                               $NL >> $TEMP/GmtScript
+	 echo "   "$GMTLinProj $GMTPaperOrien -O -K                   $NL >> $TEMP/GmtScript
+	 echo "   "-G100 $GMTVerb  -N           "<< END >>" $PsName   >> $TEMP/GmtScript
+	 echo "0 $LogoFontLine1 $LogoFontSizeL 0.0 1 1 $LogoTextLine1"            >> $TEMP/GmtScript
+	 echo "0 $LogoFontLine2 $LogoFontSizeM 0.0 0 1 $LogoTextLine2"            >> $TEMP/GmtScript
+	 echo "0 $LogoFontLine3 $LogoFontSizeM 0.0 0 1 $LogoTextLine3"            >> $TEMP/GmtScript
+	 echo "END"                                                       >> $TEMP/GmtScript
+	 echo " "                                                         >> $TEMP/GmtScript
+      endif      
+
+
+      # check if no-footer is desired
+      if(!($?NOFOOTER)) then
+	 set NOFOOTER = "no"
+      endif
+
+      if ($NOFOOTER != "yes") then
+	echo "# Print dummy circle to write POSTSCRIPT FOOTER "   >> $TEMP/GmtScript 
+	echo psxy $GMTRange $GMTProjection   -O  -L   $NL >> $TEMP/GmtScript
+	echo "   "$GMTPaperOrien -G255/20/100 -Sc0.01         $NL >> $TEMP/GmtScript
+	echo "   -W1p/0/0/0 << END >>" $PsName                    >> $TEMP/GmtScript
+	echo $c1_lon"   "$c1_lat                                  >> $TEMP/GmtScript
+	echo "END"                                                >> $TEMP/GmtScript
+	echo " "                                                  >> $TEMP/GmtScript
+      endif
+
+      echo " ... ended"
+

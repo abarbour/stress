@@ -1,0 +1,68 @@
+echo " ... working in script DefineStress2Data"
+
+set TEMP_S = $TEMP2
+
+set PBE_filter_flag = 'inactive'
+
+set StressData = $Stress2Data
+
+set STypeFMS = $S2TypeFMS
+set STypeFMA = $S2TypeFMA
+set STypeFMF = $S2TypeFMF
+set STypeOC  = $S2TypeOC
+set STypeHF  = $S2TypeHF
+set STypeBO  = $S2TypeBO  
+set STypeGI  = $S2TypeGI 
+set STypeDIF = $S2TypeDIF
+set STypeBS  = $S2TypeBS
+
+
+
+set SQualA = $S2QualA
+set SQualB = $S2QualB
+set SQualC = $S2QualC
+set SQualD = $S2QualD
+set SQualE = $S2QualE
+
+
+
+set SDepthTop = $S2DepthTop
+set SDepthBot = $S2DepthBot
+
+set SRegimeTF = $S2_Regime_TF
+set SRegimeTS = $S2_Regime_TS
+set SRegimeSS = $S2_Regime_SS
+set SRegimeNS = $S2_Regime_NS
+set SRegimeNF = $S2_Regime_NF
+set SRegimeU  = $S2_Regime_U 
+
+set SDataQASize =  $S2DataQASize
+set SDataQBSize =  $S2DataQBSize
+set SDataQCSize =  $S2DataQCSize 
+set SDataQDSize =  $S2DataQDSize
+set SDataQESize =  $S2DataQESize
+
+set SDataQALen = $S2DataQALen
+set SDataQBLen = $S2DataQBLen
+set SDataQCLen = $S2DataQCLen 
+set SDataQDLen = $S2DataQDLen
+set SDataQELen = $S2DataQELen
+
+set SQualAT = $S2QualAT
+set SQualBT = $S2QualBT
+set SQualCT = $S2QualCT
+set SQualDT = $S2QualDT
+set SQualET = $S2QualET
+
+set SDataTFColor = $S2DataTFColor
+set SDataSSColor = $S2DataSSColor      
+set SDataNFColor = $S2DataNFColor
+set SDataUColor = $S2DataUColor
+
+set StressSC = $Stress2SC
+if ($StressSC == "y") then
+   set StressSCCol = $Stress2SCCol
+   set StressSCFontSiz = $Stress2SCFontSiz
+endif   
+
+echo " ... ended"

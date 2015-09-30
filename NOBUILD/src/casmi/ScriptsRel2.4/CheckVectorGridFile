@@ -1,0 +1,33 @@
+# Script checking if grid file has to be projected to reduce number of points. set the variable ProjGrdFile
+# to true or false
+echo " ... working in script CheckVectorGridFile"
+   
+grdinfo $CheckFile > $TEMP/info.grdfile
+
+# run awk to extract the x and y resolution, calculate the product of nx * ny
+set orig_nxny = `awk -f $SCRIPTS/calc_origgrdres.awk -v range=$GMTGridRange -v temp=$TEMP $TEMP/info.grdfile `
+
+cat $TEMP/origgrd.info
+
+# calculate the product of nx*ny for a projected grid 
+set proj_nxny = `awk -f $SCRIPTS/calc_projgrdres.awk -v height=$PlotHeight -v width=$PlotWidth  -v temp=$TEMP -v res=$CheckResolution`
+
+cat $TEMP/projgrd.info
+
+# check which product is smaller 
+echo $proj_nxny '<' $orig_nxny > $TEMP/check
+set Check = `awk -f $SCRIPTS/comp.awk $TEMP/check`  
+
+# if proj_nxny is smaller than orig_nxny we have to project the file to reduce the number of points
+if ($Check == true) then
+
+  set ProjGrdFile = true
+  echo "     -> running grdproject and creating vectorplot of projected gridfile"  
+else 
+
+  set ProjGrdFile = false
+  echo "     -> creating vectorplot of original gridfile"  
+  
+endif  
+
+echo " ... ended"

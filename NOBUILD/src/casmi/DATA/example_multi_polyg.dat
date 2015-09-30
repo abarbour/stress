@@ -1,0 +1,8 @@
+# data format is: 1 line header, one or more data segments: longitude latitude , each segment seperated by [x], >, Segment name, pen style (eg: 4/0/0/0ta), fill pattern
+20 50
+30 40
+x, >, Test, 4/0ta, 
+31 45
+34 45
+45 50
+

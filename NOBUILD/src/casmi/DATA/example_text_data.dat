@@ -1,0 +1,3 @@
+# data format is: 1 line header, data: longitude latitude size angle fontno justify text
+20 50 20 0 0 'What's that?'
+

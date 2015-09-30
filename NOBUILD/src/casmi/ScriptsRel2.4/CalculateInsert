@@ -1,0 +1,46 @@
+echo "... working in skript CalculateInsert"
+
+# for better understanding the width of the inserted map is allready calculated
+# in the master script
+
+# Here we calculate the resulting height projecting the upper right 
+# corner of the area to be plotted (lower left is mapped to 0/0 ).
+
+# the projection used for the inserted map is: Mercator
+set GMTInsProject = "-JM"$InsertWidth
+set GMTInsRange = "-R"$c1i_lon"/"$c2i_lon"/"$c1i_lat"/"$c2i_lat
+
+mapproject $GMTInsRange $GMTInsProject <<END > $TEMP/temp.file
+$c2i_lon $c2i_lat
+END
+set c2i_x = `awk '{print $1}' $TEMP/temp.file`
+set c2i_y = `awk '{print $2}' $TEMP/temp.file`
+
+set InsertHeight = $c2i_y
+
+echo $PlotHeight '<' $InsertHeight > $TEMP/check
+set Check = `awk -f $SCRIPTS/comp.awk $TEMP/check`  
+ 
+if ($Check == "true") then
+   echo "ERROR: the InsertHeight resulting from the scale and projection is too large"
+   echo "  choose a smaller area "
+   echo "  and re run the script ..."
+   # hier irgenwie abbrechen. 
+endif
+
+# determine Origin of Insert Map with respect to ll corner of map:
+if ($PosInsert == "ll") then 
+   set InsertXShift = 0
+   set InsertYShift = 0
+else if ($PosInsert == "lr") then 
+   set InsertXShift = `awk -v x=$PlotWidth -v y=$InsertWidth 'BEGIN{val=x-y; print val}'`
+   set InsertYShift = 0 
+else if ($PosInsert == "ur") then 
+   set InsertXShift = `awk -v x=$PlotWidth -v y=$InsertWidth 'BEGIN{val=x-y; print val}'`
+   set InsertYShift = `awk -v x=$PlotHeight -v y=$InsertHeight 'BEGIN{val=x-y; print val}'` 
+else if ($PosInsert == "ul") then 
+   set InsertXShift = 0
+   set InsertYShift = `awk -v x=$PlotHeight -v y=$InsertHeight 'BEGIN{val=x-y; print val}'` 
+endif
+     
+echo "... ended"

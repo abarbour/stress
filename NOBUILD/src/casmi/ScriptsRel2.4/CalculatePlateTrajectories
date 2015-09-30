@@ -1,0 +1,42 @@
+echo " ... working in script CalculatePlateTrajectories"
+
+# create small circles centered at Euler Pole of choosen Plate Pair
+# first we extract the info from the file RotationPoles.info
+
+set MotionPlatesP = `awk -v pp=$MotionPlates 'BEGIN{val=sqrt(pp*pp); print val}'`
+
+set Elon = `awk -v pp=$MotionPlatesP '{if($1==pp) {print $3}}'  $SCRIPTS/RotationPoles.info`  
+set Elat = `awk -v pp=$MotionPlatesP '{if($1==pp) {print $4}}'  $SCRIPTS/RotationPoles.info`  
+
+# calculate the location of north pole (0/90) and origin (0/0) in rotated 
+# coordinate system with 'north pole' at Eulerpole location and center at
+# Elon/0 (this center will not work if Eulerpole is at 0/0)
+
+project -T$Elon/$Elat -C$Elon/0 -Fpq << END >  $TEMP/point.pro
+0 90
+END
+
+set Elonpro = `awk '{print $1}' $TEMP/point.pro`
+set Elatpro = `awk '{print $2}' $TEMP/point.pro`
+
+project -T$Elon/$Elat -C$Elon/0 -Fpq << END >  $TEMP/point.pro
+0 0
+END
+
+set Clonpro = `awk '{print $1}' $TEMP/point.pro`
+set Clatpro = `awk '{print $2}' $TEMP/point.pro`
+
+# create file containing the circles of constant latitude in the rotated coord.
+# system.
+ 
+awk -f $SCRIPTS/constlatcircle.awk -v LatInc=$MotionTrajInc > $TEMP/PlateMotionTraj$MotionPlates.dat
+ 
+# project this file with rotation pole equal to Epro with center cpro
+project $TEMP/PlateMotionTraj$MotionPlates.dat -T$Elonpro/$Elatpro -C$Clonpro/$Clatpro -Fpq > $TEMP/PlateMotionTraj$MotionPlates.pq
+
+# add a '>' after every new circle. We created 181 points for every circle.
+# see skript constlatcircle.awk
+ 
+awk -f $SCRIPTS/addseperator.awk -v addline=181 -v latinc=$MotionTrajInc $TEMP/PlateMotionTraj$MotionPlates.pq > $TEMP/PlateMotionTraj$MotionPlates.gmt
+echo " ... ended"
+

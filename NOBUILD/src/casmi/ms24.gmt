@@ -1,0 +1,1882 @@
+#!/bin/csh 
+#
+# C-shell script to plot (stress) maps in different projections
+# 
+# The lines starting with an '#' are comment lines
+#
+#
+# Things to define/change:
+#--------------------------
+# set the following variables according to the 'local' situation:
+# SCRIPTS      Directory containing the C-Shell scripts which will be 
+#              called by this masterscript.
+#              (at Geophys. Institute do not change!)
+# GMT          Directiory with the gmt 3.0 executables
+# GMT2_4       Directiory with the program grdraster, used for extracting
+#              a region from the ETOPO5 file.
+# DTMPATH      Directory with the euro2.5.grd and the dtm5.grd (set to dummy 
+#              if this files are not available
+# ETOPO5PATH   Directiory with the famous etopo5.b file
+# CPTPATH    Directory with some usefull .cpt files (Color palette files).
+# TEMP         Directory used for storing temporary files.
+# TEMP1, TEMP2 Directory used for storing temporary information for plotting
+#              stress direction symbols.
+#              These two directories MUST NOT be the same!
+# PRIVATDATA   Directory to store privat datas (create if you want)
+# do not change at Geophysical Institute Uni Karsruhe! 
+
+###############################
+# geändert am 12. Sept. 2000  #
+# da neue GMT3.3.5 - Version; #
+# +Änderung der Dateistruktur #
+# 
+# Aenderungen von JH, 16.8.02
+# 2.9.: GMT dir: 3.4.1
+# Aenderungen von Daniel Kurfeß, Februar 2008
+##############################
+#set SCRIPTS      = /usr/local/GMT3.3.3/Stressmap/ScriptsRel2.4
+#set GMT          = /usr/local/GMT3.3.3/bin   
+#set ETOPO5PATH   = /usr/local/GMT3.3.3/lib
+#set GRDPATH   = /usr/local/GMT3.3.3/Stressmap/GRD
+#set PUBLICDATA   = /usr/local/GMT3.3.3/Stressmap/PUBLICDATA
+#set CPTPATH   = /usr/local/GMT3.3.3/Stressmap/CPT
+set SCRIPTS = /home/jhoehne/casmi/ScriptsRel2.4
+#set SCRIPTS      = /home/jhoehne/casmo-scripts/scripts/
+#set GMT          = /usr/local/GMT3.4.1/bin   
+set GRDPATH   = /usr/local/GMT_RELATED/GRD
+set PUBLICDATA   = /usr/local/STRESS_SOFTWARE/STRESSMAP/PUBLICDATA
+set CPTPATH   = /usr/local/GMT_RELATED/CPT
+
+unset noclobber
+unset noglob
+
+# change according to your directories
+set PRIVATDATA   = $HOME/tmp
+set TEMP = $HOME/.casmi-Temp/
+set TEMP1 = $HOME/.casmi-Temp1/
+set TEMP2 = $HOME/.casmi-Temp2/
+set TEMP3        = $HOME/gmt/Temp3
+#set SMOOTHDATA   = $HOME/programs/Smooth
+# makes the dirs if they not exist
+if  (! -d $TEMP) then
+  mkdir $TEMP $TEMP1 $TEMP2
+endif
+
+# set an alias to use gnu awk. Do so if you are working on a SUN. Suns awk 
+# is outdated and doesn't support the option this script needs.
+# uncomment the following line if you want to use gnu's gawk.
+# alias awk gawk
+
+# enter name of program used for viewing postscript files 
+# (for example: 'pageview' on a SUN, or 'gv' or 'gs' for a HP)
+set GHOSTSCRIPT  = gv 
+
+# setting GMT Defaults
+
+set DOTS_PER_INCH = 600
+set MEASURE_UNIT = cm
+set BASEMAP_TYPE = fancy
+set ANOT_FONT_SIZE = 14p
+set FRAME_WIDTH = 0.075i
+set FRAME_PEN = 1.25p
+set PAGE_COLOR = 255/255/255
+set LABEL_FONT_SIZE = 14p
+
+# set interactive to communicate at certain points, if INTERACTIVE = false
+# the script will continue without interactive communication.
+set INTERACTIVE  = false   #true           # false    
+
+
+# set NOFOOTHER = "yes" if you want to create postscript code without a footer.
+# You will be able to view the file, but you can not print it. Used to append
+# more postscript code in a second run.
+# set NOFOOTER = "yes"
+
+# set OVERLAY = "yes" if you want to append the postscript code generated 
+# with this script to the postscript-file you define with PsName
+# This file must be created without footer (NOFOOTER = "yes")
+#set OVERLAY = "yes"
+
+set WSMLogo
+
+set Release = "Release 2.4"
+
+echo " " 
+echo "                  Welcome to the new GMT Skript .."
+echo "                            " $Release 
+echo "                            Veronika Wehrle " 
+echo "                                  and "
+echo "                             Stefan Hettel "
+echo " " 
+
+
+#~~# Name of postscript-file to be created: 
+#------------------------------------------
+set PsName = casmi-output
+
+echo "Creating postscript file: "$PsName
+
+
+### Page setup: 
+#---------------
+#---------------
+
+#~~# Paper size, possible: A4, A3, A2, A1, A0, Letter, Legal, Tabloid, user_defined
+#----------------------------------------------------------------------------------
+set PaperSize = A4
+
+if ($PaperSize == "user_defined") then
+# give width and heigth of paper (in inch)
+  set PaperWidth = 
+  set PaperHeight = 
+endif
+  
+#~~# Paper orientation ("Landscape" or "Portrait"; uncomment the one you want):
+#~#----------------------------------------------------------------------------
+#set PaperOrientation = "Landscape" 
+set PaperOrientation = Portrait
+
+#~# Width of plotted area (in inch)
+# possible: default (uses papersize and margins), ignored if Scale (further down)
+# is given:
+set PlotWidth = default
+#set PlotWidth = 7.50
+
+#~# Left and bottom Margin (Origin of plot) in inches (1inch = 2.54cm):  
+set LeftMargin = 0.7
+set BottomMargin = 1.
+
+#~# color background in the size of the bounding box
+set BBoxFrame = n
+
+if ($BBoxFrame == "y") then  # defaults are set in Script
+   set BBoxFrameCol = -W2/0/0/0
+   set BBoxFillCol = " "
+endif
+   
+# compute PlotWidth and resulting DeltaX (=Width of Map) 
+source $SCRIPTS/CalculatePageSetup
+
+echo "Page setup:"
+echo " PaperSize is: " $PaperSize
+echo " Paper orientation is: " $PaperOrientation
+echo " Width of map in inches is: " $PlotWidth
+echo " Left Magin is:" $LeftMargin "inches; Bottom Margin is:" $BottomMargin "inches"
+
+
+### Plot Informations (Basic Map):
+#---------------------------------
+#---------------------------------
+
+#~~# Region to be plotted: Longitude/Latitude interval:
+#-------------------------------------------------------
+# c1_lon: west, c2_lon: east, c1_lat: south, c2_lat: north
+set c1_lon = 33:5
+set c2_lon = 38
+set c1_lat = 29
+set c2_lat = 34.5
+
+#~# choose if you want a "rectangular" map or a map "bounded" by the latitude
+# and longitude you specified (not relevant for Mercator or Orthographic proj.). 
+# For a "rectangular" map the boundaries will be rectangular and defined by
+# the longitude/latitude of the lower left (c1_lon/c1_lat) and upper right
+# corner (c2_lon/c2_lat) (appendix r for the Range in gmt). 
+set MapShape = bounded
+#set MapShape = "bounded"
+
+echo "Plotting region: " 
+echo " "$c1_lon " to " $c2_lon " degrees Longitude "
+echo " "$c1_lat " to " $c2_lat " degrees Latitude "
+
+
+#~~# Projection (possible at the moment are those which are listed):
+#--------------------------------------------------------------------
+# remove the '#' for the projection you want. Specify further parameters
+# for the projection you choose in the blocks 'if ($ProjectionName == ...'.
+
+set ProjectionName = Mercator
+#set ProjectionName = "Albers_Conic_Equal-Area"
+#set ProjectionName = "Lambert_Conic_Conformal"
+#set ProjectionName = "Lambert_Azimuthal_Equal-Area"
+#set ProjectionName = "Orthographic"                # globe
+#set ProjectionName = "Mollweide"                   # whole earth
+
+if ($ProjectionName == "Mercator") then
+  #~# define Scale: either use "default" (scale uses the PlotWidth)
+  # or Scale along the equator in 1:xxxxxx
+  # for further explanations see: man psbasemap 
+  set Scale = "default"
+  #set Scale = "1:7000000"
+endif
+
+if ($ProjectionName == "Albers_Conic_Equal-Area" || \
+    $ProjectionName == "Lambert_Conic_Conformal") then
+  #~# define Scale: either use default (scale uses the PlotWidth)
+  # or Scale along the standard parallels in 1:xxxxxx
+  # for further explanation see: man psbasemap 
+  set Scale = "default"
+  #set Scale = "1:400000"
+   
+  #~# define the longitude and latitude of the projection center:
+  # (default uses middle of choosen range, do not use default if map range
+  # is given in minutes!!)
+  set lon_pro = default
+  set lat_pro = default
+  #set lon_pro = 14 
+  #set lat_pro = 50
+
+  #~# define the two standard paralles (stan1_pro is the lower one):
+  # (default uses lower third for stand1_pro and upper third for stand2_pro;
+  # do not use default if map range is given in minutes!!)
+  set stan1_pro = default
+  set stan2_pro = default
+  #set stan1_pro = 49 
+  #set stan2_pro = 51
+endif
+
+if ($ProjectionName == "Lambert_Azimuthal_Equal-Area") then
+  #~# define Scale: either use "default" (scale uses the PlotWidth)
+  # or Scale in 1:xxxxxx 
+  # for further explanations of scale see: man psbasemap 
+  set Scale = "default"
+  #set Scale = "1:400000"
+    
+  #~# define the longitude and latitude of the projection center:
+  # (default uses middle of choosen range, do not use default if map range
+  # is given in minutes!!)
+  set lon_pro = default
+  set lat_pro = default
+  #set lon_pro = 13.66666 
+  #set lat_pro = 51
+endif
+
+if ($ProjectionName == "Orthographic") then
+  #~# define Scale: either use "default" (scale uses the PlotWidth)
+  # or Scale in 1:xxxxxx (may cause problems with plotting
+  # stress symbols, better use default)
+  # for further explanations of scale see: man psbasemap
+  set Scale = "default"
+  #set Scale = "1:51779013"
+    
+  #~# define the longitude and latitude of the projection center:
+  # (default uses middle of choosen range, do not use default if map range
+  # is given in minutes!!)
+  #set lon_pro = "default"
+  #set lat_pro = "default" 
+  set lon_pro = default
+  set lat_pro = default
+endif
+
+if ($ProjectionName == "Mollweide") then
+  #~# define Scale: either use "default" (scale uses the PlotWidth)
+  # or Scale along the equator in 1:xxxxxx (CHECK PROBLEM WITH GMT)
+  # for further explanations see: man psbasemap or gmt cookbook 
+  #set Scale = "default"
+  set Scale = "1:2e8"
+  
+  #~# define Central Meridian ("default" uses the meridian through Greenwich)
+  set CentralMerid = default
+  #set CentralMerid = -180
+endif
+
+
+#~# Title of Map:
+#-----------------
+set PlotMapTitle = n
+#---------------------
+# choose "y" if you want to plot a Map Title
+
+if ($PlotMapTitle == "y") then
+  #~# Set the Title (enclose in " ", for special characters see gmt cookbook)
+  set MapTitle = "Example Title"
+  
+  #~# set the fontsize
+  set MapTitleFontS = 16
+
+  #~# set the color of the text
+  set MapTitleFontC = 0/0/0
+  
+  #~# define the position of title
+  # enter "x/y" (in inches) with respect to lower left corner of the map
+  # x/y refers to the upper left corner of the box surrounding the string
+  # or use "default" (will plot the Map Title in the upper left corner of the map)
+  # or "above" (will plot the title centered above the map).
+  set MapTitleLoc = above
+  set MapTitleLoc = above
+  #set MapTitleLoc = "0.0/-0.45" 
+
+  #~# plot rectangle beneath textstring, give color of rectangle and append o
+  # to draw outline of rectangle. Set to "no" if no rectangle should be drawn
+  set MapTitleRect = "no"
+  #set MapTitleRect = "255/255/255/o"
+
+endif
+ 
+ 
+#~~# Gridlines, Grid-Annotations, Simple Map Scale and Info String:
+#------------------------------------------------------------------
+#~# Gridlines, gridlines are plotted every n-th degree. Possible to 
+# give different intervals for longitude and latitude, set to 0 if 
+# no gridlined or annotations should be plotted. 
+# (to obtain minutes add m, see: man psbasemap)
+set GridLinesLon = 0
+set GridLinesLat = 0
+
+#~# Annotations, label is written every m-th degree.
+set GridAnnotLon = 1
+set GridAnnotLat = 1
+
+#~# Simple Map Scale. Scale is calculated at the middle of the map.
+# (latitude (lat2-lat1)/2+lat1)
+set SimpleMapScale = n
+
+if ($SimpleMapScale == "y") then
+  # enter length of scale in km.
+  set ScaleLength = 200
+
+  #~# position of scale, default puts it at the lower left corner under the
+  # map. If you want to position it manually enter lon/lat where to put
+  # center of scale
+  set ScalePosition = default
+  #set ScalePosition = -15/55
+
+endif
+
+#~# Info String with projection, scale and if needed standard paralles and
+# projection center. Set PlotInfoString to "y" to get the full information;
+# set it to "s" (short) to get only the projection. 
+# The string will be placed at the lower right corner of the map.
+set PlotInfoString = n
+
+# info: calculate the scale depending on the PlotWidth, check if PlotHeight is
+# large enough, if INTERACTIVE is set to true, ask if user wants to continue.
+# exit masterscript here if user chooses to stop.
+# calculate the projection-center and standard paralles if they are set to default
+source $SCRIPTS/CalculateScale
+if ($stop == "true") then 
+  exit 
+endif 
+
+echo " Projection used is: " $ProjectionName
+echo " Scale used is: " $Scale
+echo " "$InfoStandParalles
+echo " "$InfoProjCenter
+
+
+#~~# Inserted overview map (set y or n):
+#----------------------------------------
+set Insert = n
+#----------------
+# plot a small overview map showing the location of the map.
+ 
+if ($Insert == "y") then
+  #~~# Range of overview map: longitude/latitude (WESN) interval:
+  set c1i_lon = 23
+  set c2i_lon = 48
+  set c1i_lat = 19
+  set c2i_lat = 44.5
+
+  #~# Position on map:
+  # "ll"=lower left; "lr"=lower right; "ul"=upper left; "ur"=upper right
+  set PosInsert = ll
+
+  #~# Width of inserted map: give width in inches or use default (calculates 
+  # factor of PlotWidth) 
+  set InsertWidth = default
+  #set InsertWidth = 3.5 
+  if ($InsertWidth == "default") then
+    set factor = 0.25
+    set InsertWidth \
+     = `awk -v x=$PlotWidth -v y=$factor 'BEGIN{val=x*y; print val}'`
+  endif
+ 
+  #~# show political boundaries in overview map, set to "y" or "n"
+  set ShowPolitInsert = n
+  
+  if ($ShowPolitInsert == "y") then
+      #~# set penattributes and color of political boundaries in map 
+      # penwidth/r/g/b[pen-attr]
+      set PolitBoundInsert = 1/125/0/125
+  endif    
+ 
+  #~# color of continents and ocean in overview map, coastline pen attributes
+  # (pen-width and color)
+  set ContinFillInsert = 230/230/230
+  set OceanFillInsert = 220/245/255
+  set CoastlineInsert = 1/0/0/0
+  set MapColorInsert = 250/250/250
+
+  # calculate the absolute position of inserted map ... 
+  source $SCRIPTS/CalculateInsert
+ 
+  echo "Plotting inserted overview map."
+  echo " Range: " $c1i_lon" to "$c2i_lon" deg Longitude "$c1i_lat" to "$c2i_lat" deg Latitude "
+  echo " Width of inserted map in inches is: " $InsertWidth
+  echo " Position of inserted map is: " $PosInsert
+  echo " Continent fill: "$ContinFillInsert" and Ocean fill: "$OceanFillInsert 
+
+endif
+
+
+### Choose the information to be plotted (set y or n): 
+#------------------------------------------------------
+#------------------------------------------------------
+
+#~~# Grid-file: Topography:
+#--------------------------
+set Topography = n
+#--------------------
+if ($Topography == "y") then
+  #set TopoFile = $GRDPATH/romania+.grd
+  set TopoFile = /home/jhoehne/casmi/DATA/dtm5.grd
+  #set TopoFile = $GRDPATH/euro2.5.grd
+  
+  set TopoCptFile = /home/jhoehne/casmi/DATA/topo_col.cpt
+  set TopoIllum = n
+ 
+  if ($TopoIllum == "y") then
+     #~# direction of light source, angle positive clockwise from north (y-axis) 
+     set TopoIllumAng = 90
+
+     #~# normalization for intensity , default uses option -Nt (grdgradient)
+     # give a value between 0 and 1 (the smaller TopoIllumNorm is the less is
+     # the illumination effect).
+     set TopoIllumNorm = t0.75
+     #set TopoIllumNorm = t0.75
+  endif
+  
+  $SCRIPTS/CheckIfFileExists $TopoFile $TopoCptFile || exit
+
+  echo "Plotting topography grid-file" $TopoFile:t 
+  echo " and palette table file "$TopoCptFile:t
+
+endif
+ 
+
+#~# Other Grid-file: (will be plotted after the topography file):
+#-----------------------------------------------------------------
+set OtherGrid = "n"
+#-------------------
+if ($OtherGrid == "y") then
+  set GridFile = /home/ih/GMT3.3.3/stress.dir/Data/globalage_gmt.grd
+  set GridResolution = 30
+  set GridCptFile = $CPTPATH/age_colors.cpt
+
+  $SCRIPTS/CheckIfFileExists $GridFile $GridCptFile || exit
+  
+  echo "Plotting grid-file "$GridFile:t" using resolution of "$GridResolution "dpi" 
+  echo " and palette table file "$GridCptFile:t
+
+endif
+
+
+#~~# Scale for grid file:
+#--------------------------------------------------------------------------
+set GridScale = n
+#-------------------
+if ($GridScale == "y" ) then
+   #~# define the grid file for which you want to plot the scale bar.
+   # either give the full name of a color palette file (.cpt) or choose
+   # "topo" (.cpt file of topography will be used for creating the
+   # scale bar) or "grid" (.cpt file of other grid file will be used) 
+   set GridScaleFile = "topo"
+   #set GridScaleFile = "grid"
+   #set GridScaleFile = "deviation.cpt"
+
+   #~# define if scale should be "h"orizontal or "v"ertical
+   set GridScaleOri = h
+     
+   #~# define lenght and width of scale (in inches)
+   set GridScaleLen = 3
+   set GridScaleWid = 0.3
+     
+   #~# define position of center/top for horizontal scale or center/left
+   # for vertical scale (in inches) with respect to the lower left corner of 
+   # the map.
+   set GridScaleX = 3
+   set GridScaleY = 3
+
+   #~# define label (no octal escape characters allowed)
+   set GridScaleLab = "Topography"
+   
+   #~# to obtain equal-sized rectangles set -L, default scales rectangles
+   # according to the z-range in the .cpt-file (see: man psscale -L option)
+   set GridScaleSpac = -L
+  
+   #~# put a rectangle with a fill beneath the scale, set fill to "no" if you do
+   # not want a rectangle (rectangle makes it possible to plot scale on top of map)
+   set GridScaleFil = no
+     
+   # set dimensions (in inches) of the rectangle with respect to the scale bar,
+   # ignored if fill is set to "no".
+   #~# clearance between scale bar and rectangle on the lefthand side (h) or
+   # at bottom (v).
+   set GridScaleClLL = 0.1
+
+   #~# clearance on the righthand side (h) or at the top (h)
+   set GridScaleClLR = 0.1
+
+   #~# clearance at the top (h) or at the lefthand side (v)
+   set GridScaleClWL = 0.1
+
+   #~# clearance at the bottom (h) or at the righthand side (v), this is the 
+   # side where the label will be plotted.
+   set GridScaleClWR = 0.5
+   
+endif   
+
+
+#~# Contour lines of a grid file:
+#---------------------------------
+set Contour = n
+#-----------------
+if ($Contour == "y") then
+  #~# either give the name of a Grid-file or set ContourFile to one of the 
+  # files containing topgraphy (explanation for the different files see under 
+  # the topic Topography above).
+  # The expected file format is the gmt .grd format.
+  # For more information refer to gmt cookbook, Appendix B, 2-D grdfile.
+  # (enter full or relative path to directory of this script)
+  set ContourFile = $GRDPATH/dtm5.grd
+  #set ContourFile = $GRDPATH/euro2.5.grd
+  
+  #~# contour intervall (in grid-file units):
+  set ContourInterval = 200
+  
+  #~# contour annotation intervall:
+  # (set to zero (0) if you don't want any annotations).
+  # optional append font size and color of underlying rectangle without blanks:
+  # example: annot. interv. 500, fontsize 7, color 200/50/70 
+  # -> 500f7/200/50/70. (see: man grdcontour)
+  set ContourAnnot = 500
+  
+  #~# pen for regular contour lines:
+  # width/color/texture (see: gmt cookbook for further explanation)
+  set ContourCPen = 1/0/0/0/t30_10_5_10:0
+  
+  #~# pen for annotated contour lines:
+  # width/color/texture (see gmt cookbook for further explanation)
+  set ContourAPen = 4/255/0/0/ta
+
+  $SCRIPTS/CheckIfFileExists $ContourFile || exit
+
+  echo "Plotting contours from grid-file "$ContourFile:t" every "$ContourInterval "units" 
+  echo " with an annotation spacing of "$ContourAnnot
+  
+endif  
+
+
+### Coastlines, Rivers, Political Boundaries:
+#----------------------------------------------
+
+# Coastlines rivers and political boundaries are part of the database 
+# contained in the new GMT 3.0 Version. See Reference Cookbook Appendix K
+# and the man page of pscoast for options. 
+# Available are 5 different datasets with different resolutions:
+# (c)rude:        use for overview maps of a hemisphere or a global view.
+# (l)ow:          use for large regions map. 
+#                 Regions larger approx. 30 times 30 degrees.
+# (i)ntermediate: use for regions map. Regions between 30 times 30 and approx.
+#                 5 times 5 degrees.
+# (h)igh:         detailed maps of regions between approx. 5 times 5 
+#                 and 2 times 2 degrees or even smaller, depending on how 
+#                 detailed you need the map.
+# (f)ull:         use for Regions of max.: 2 times 2 degrees. 
+
+#~# DataSet used (explanation see above)
+set DataSet = i
+
+#~# choose size (in km^2) below which features (lakes, islands...) are not 
+# plotted. For further explanations see: man gmt pscoast option -A.
+set DataSize = 200
+
+#~# choose max data level (1: ocean-land boundary, 2: land/lake boundaries,
+# 3: lake/island-in-lake boundaries,
+# 4: island-in-lake/lake-in-island-in-lake boundaries) 
+set DataLevel = 2
+
+
+#~# GMT coastlines and ocean or continent fill:
+#-----------------------------------------------
+set Coastlines = y
+#--------------------
+  
+#~# following options are only used if you choose no topograhpy.
+# if you choose a different grid file, set the continent or ocean
+# fill to "no" (for plotting gravimetry of ocean floor and continent in grey 
+set ContinentFill = 230
+#set OceanFill = "0/0/255"  
+set OceanFill = 190/210/255
+
+if ($Coastlines == "y") then
+    #~# pen attributes for plotting coastlines:
+    set CoastPenSize = 3
+    set CoastPenColor = 0/0/0
+  
+    echo "Plotting coastlines"
+    echo " using pen attributes "$CoastPenSize"/"$CoastPenColor
+    if ($Topography != "y") then 
+	echo " Continent fill is:" $ContinentFill
+	echo " Ocean fill is:" $OceanFill
+    endif  
+
+endif
+
+
+
+
+#~# GMT-Rivers:
+#---------------
+set Rivers = y
+#----------------
+if ($Rivers == "y") then
+  # NOTE: Lakes are part of the coastline database. If you want to plot 
+  # lakes you have to switch coastlines on !
+  # GMT gives you the choice of several river types which can be plotted.
+  # See the -I option in manpages of pscoast. 
+  # Default here is that all permanent major rivers 
+  # are plotted (option -I1) in pscoast. 
+  # To plot additional rivers use the option with the additional string 
+  # explained below.
+  
+  #~# pen attributes for default rivers:
+  set RiverPenSize = 2
+  set RiverPenColor = 190/210/255
+
+  # additional String which is passed to pscoast without checking for sense!
+  # (so be careful). Makes it possible to enlargen the choice of which rivers
+  # you want to be plotted inluding the pen attributes
+
+  #~# following string will additionally plot all rivers and canals 
+  # in blue with a penwidth of 1: " -Ia/1/0/0/255 "
+  set GmtRiverAdditional = "-I2/1/191/214/255" 
+  
+  echo "Plotting all permanent rivers"
+  echo " using pen atributes "$RiverPenSize"/"$RiverPenColor
+  #if ($GmtRiverAdditional != "") then 
+  #   echo " and passing string" $GmtRiverAdditional "to the GMT command pscoast"
+  #endif
+
+endif
+
+
+#~# GMT Political Boundaries: 
+#-----------------------------
+set PoliticalBounds = n
+#-------------------------
+if ($PoliticalBounds == "y") then
+  # the political boundaries are part of the new gmt database
+  #~# pen attributes:
+  set PolitBoPenSize = 3
+  set PolitBoPenColor = 0/0/0
+
+  echo "Plotting political boundaries "
+  echo " using pen atributes "$PolitBoPenSize"/"$PolitBoPenColor
+endif
+
+
+#~~# Plate Boundaries:
+#----------------------
+set PlateBounds = n
+#---------------------
+if ($PlateBounds == "y") then
+  #~~# enter filename
+  # File format: 1 line header; data: longitude  latitude
+  # (full path or relative path + filename)
+  # Either use our 'own' plate boundary file
+  #set PlaBoData = $PUBLICDATA/plabo_pm180.dat
+
+  # or use the official PLATES Project plate boundary file. 
+  # ATTENTION if you use this file for a publication you MUST  
+  # give the following REFERENCE:
+  # Coffin, M. F., Gahagan, L.M., Lawver, L.A., Lee, T.-Y., and Rosencrantz,
+  #  E., 1992, Atlas of Mesozoic/Cenozoic reconstructions (200 Ma to
+  #  Present Day), PLATES Progress Report No. 1-0192, University of
+  #  Texas Institute for Geophysics Technical Report No. 122, pp. 49.
+  # AND ACKNOWLEDGE the PLATES Project for providing the present day plate
+  # boundary dataset (Reference see above).
+  set PlaBoData = /home/jhoehne/casmi/DATA/plabo_pm180.dat
+
+  #~# pen attributes:
+  set PlaBoPenSiz = 3
+  set PlaBoPenCol = 0/0/0
+
+  $SCRIPTS/CheckIfFileExists $PlaBoData || exit
+
+  echo "Plotting plate boundaries defined in file:" $PlaBoData:t
+  echo " using pen atributes "$PlaBoPenSiz/$PlaBoPenCol
+endif
+
+
+#~~# Isochrones:
+#----------------
+set Isochrons = "n"
+#------------------
+if ($Isochrons == "y" ) then
+  #~~# name of isochron data file
+  # File format: 1 line header; data: longitude latitude 
+  # (full path or relative path + filename).
+  set IsoData = $PUBLICDATA/iso_new.dat
+
+  #~# pen attributes:
+  set IsoPenSiz = "3"                # pen size of isochrones
+  set IsoPenCol = "to"               # pen color of isochrones
+
+  $SCRIPTS/CheckIfFileExists $IsoData || exit
+
+  echo "Plotting isochrone polygones defined in file:" $IsoData:t
+  echo " using pen atributes "$IsoPenSiz/$IsoPenCol
+endif
+
+
+
+#~~# Oriented Symbols: Stress data:
+#-----------------------------------
+set Stresses = "y"
+#-----------------
+# It is possible to plot three stress data sets with different
+# symbol color, -size and -length. If you do not want to plot three 
+# stress data sets set Stress3Data to "no" (further down).
+# If you want to plot only one stress data set, set 
+# Stress2Data and Stress3Data to "no".
+# Set Stresses to "n" to ingnore all stress information.
+
+if ($Stresses == "y" || $Stresses == "yes") then
+
+  #~~# enter filename for first stress data file:
+  #-----------------------------------------------
+  # File format: latitude longitude azimuth type quality regime depth sitecode 
+  # A 'stress.dat'.prep file is used for plotting (same directory as stress
+  # data file). This is created if not available. 
+  # NOTE: delete this 'stress.dat'.prep file if you changed something 
+  # (eg. adding new data) in the stress data file. This forces the program to 
+  # recalculate the 'stress.dat'.prep file
+  set Stress1Data = /home/jhoehne/casmi/DATA/test_wsm.dat
+  
+  #~# Selection of different data types from first data file:
+  #set Stress1Type = "all"
+  set Stress1Type = user_defined
+  if ($Stress1Type != "all") then 
+     set S1TypeFMS = y
+     set S1TypeFMA = y
+     set S1TypeFMF = y
+     set S1TypeBO = y
+     set S1TypeOC = y
+     set S1TypeHF = y
+     set S1TypeGI = y
+     set S1TypeDIF = y
+     set S1TypeBS = y
+  endif   
+  
+  #~# Regime selection:
+  #set S1_Regimes = "all"
+  set S1_Regimes = user_defined
+  if ($S1_Regimes != "all") then 
+     set S1_Regime_TF = y
+     set S1_Regime_TS = y
+     set S1_Regime_SS = y
+     set S1_Regime_NS = y
+     set S1_Regime_NF = y
+     set S1_Regime_U = y
+  endif   
+  
+  #~# Selection of Plate Boundary Events:
+  # exclude all FMS within a certain distance
+  #set S1_BoundaryEvents_exclude_all = "all"
+  set S1_BoundaryEvents_exclude_all = user_defined
+  if ($S1_BoundaryEvents_exclude_all != "all") then 
+     set S1_CTF_exclude_all = n
+     set S1_CRB_exclude_all = n
+     set S1_CCB_exclude_all = n
+     set S1_OTF_exclude_all = n
+     set S1_OSR_exclude_all = n
+     set S1_OCB_exclude_all = n
+     set S1_SUB_exclude_all = n
+  endif   
+  set S1_CTF_exclude_all_distance = 100
+  set S1_CRB_exclude_all_distance = 100
+  set S1_CCB_exclude_all_distance = 100
+  set S1_OTF_exclude_all_distance = 100
+  set S1_OSR_exclude_all_distance = 100
+  set S1_OCB_exclude_all_distance = 100
+  set S1_SUB_exclude_all_distance = 100
+  # exclude FMS with corresponding regime within a certain distance
+  #set S1_BoundaryEvents_exclude_reg = "all"
+  set S1_BoundaryEvents_exclude_reg = user_defined
+  if ($S1_BoundaryEvents_exclude_reg != "all") then 
+     set S1_CTF_exclude_SS = n
+     set S1_CRB_exclude_NF = n
+     set S1_CCB_exclude_TF = n
+     set S1_OTF_exclude_SS = n
+     set S1_OSR_exclude_NF = n
+     set S1_OCB_exclude_TF = n
+     set S1_SUB_exclude_TF = n
+  endif   
+  set S1_CTF_exclude_SS_distance = 100
+  set S1_CRB_exclude_NF_distance = 100
+  set S1_CCB_exclude_TF_distance = 100
+  set S1_OTF_exclude_SS_distance = 100
+  set S1_OSR_exclude_NF_distance = 100
+  set S1_OCB_exclude_TF_distance = 100
+  set S1_SUB_exclude_TF_distance = 100
+  # exclude PBEs WSM-selection
+  #set S1_BoundaryEvents_exclude_PBE = "all"
+  set S1_BoundaryEvents_exclude_PBE = user_defined
+  if ($S1_BoundaryEvents_exclude_PBE != "all") then 
+     set S1_CTF_exclude_PBE_events = y
+     set S1_CRB_exclude_PBE_events = y
+     set S1_CCB_exclude_PBE_events = y
+     set S1_OTF_exclude_PBE_events = y
+     set S1_OSR_exclude_PBE_events = y
+     set S1_OCB_exclude_PBE_events = y
+     set S1_SUB_exclude_PBE_events = y
+  endif   
+  
+  #~# choose which quality of datas are to be plotted.
+  #set Stress1Quality = "all"
+  set Stress1Quality = user_defined
+  if ($Stress1Quality != "all") then 
+     set S1QualA = y
+     set S1QualB = y
+     set S1QualC = y
+     set S1QualD = n
+     set S1QualE = n
+  endif   
+
+  #~# Auswahl des zu plottenden Tiefenintervalls
+  #set Stress1Depth = "all"
+   set Stress1Depth = all
+   if ($Stress1Depth != "all") then
+      set S1DepthTop = 0
+      set S1DepthBot = 40
+   endif
+
+  #~# color (R/G/B) of symbols (default colors are: NF red, SS: green, TF: blue;
+  # black will create only black symbols)
+  set Stress1DataColor = black
+  #set Stress1DataColor = "black"
+  #set Stress1DataColor = "user_defined"
+  if ($Stress1DataColor != "default" && $Stress1DataColor != "black" ) then
+    set S1DataTFColor = 125/0/0
+    set S1DataSSColor = 0/0/125
+    set S1DataNFColor = 0/125/0
+    set S1DataUColor = 0/0/0
+  endif  
+  
+  #~# size of symbols (in inches). 
+  # possible are "verytiny" (0.05),"tiny" (0.07), "small" (0.08), "middle" (0.1), 
+  # "large" (0.12) or "user_defined".
+  set Stress1DataSize = large
+  #set Stress1DataSize = "user_defined"
+  if ($Stress1DataSize == "user_defined") then
+    set S1DataQASize = 0.3
+    set S1DataQBSize = 0.24
+    set S1DataQCSize = 0.18
+    set S1DataQDSize = 0.12
+    set S1DataQESize = 0.12
+  endif
+
+  #~# length of line showing the azimuth (in inches)
+  # possible are "verytiny" (0.25),"tiny" (0.3), "small" (0.35), "middle" (0.45),
+  # "large" (0.55), or "user_defined".
+  set Stress1DataLen = large
+  #set Stress1DataLen = "user_defined"
+  if ($Stress1DataLen == "user_defined") then
+    set S1DataQALen = 0.9
+    set S1DataQBLen = 0.7
+    set S1DataQCLen = 0.5
+    set S1DataQDLen = 0.3
+    set S1DataQELen = 0.1
+  endif
+ 
+  #~# thickness for outline of symbol (in points)
+  # possible are "small" (1 point), "middle" (2 points), "large" (3 points)
+  # or "user_defined".
+  set Stress1DataT = large
+  #set Stress1DataT = "user_defined"
+  if ($Stress1DataT == "user_defined") then
+    set S1QualAT = 4
+    set S1QualBT = 4
+    set S1QualCT = 4
+    set S1QualDT = 4
+    set S1QualET = 4
+  endif
+ 
+  #~# plot sitecode used in database next to the symbol
+  set Stress1SC = n
+
+  if ($Stress1SC == "y") then
+    # color of text
+    set Stress1SCCol = 0/0/0
+    set Stress1SCFontSiz = 6
+  endif
+  
+  #~~# enter filename for second stress data file or set Stress2Data = "no":
+  #---------------------------------------------------------------------------
+  # use this option if you want to plot a second set of stress data with
+  # different colour, size etc.
+  # File format: see above (Stress1Data)
+  set Stress2Data = no
+  #set Stress2Data = $HOME/GMT/qqq.dat
+  
+  #~# Selection of different data types from second data file:
+  #set Stress2Type = "all"
+  set Stress2Type = user_defined
+  if ($Stress2Type != "all") then 
+     set S2TypeFMS = y
+     set S2TypeFMA = y
+     set S2TypeFMF = y
+     set S2TypeBO = y
+     set S2TypeOC = y
+     set S2TypeHF = y
+     set S2TypeGI = y
+     set S2TypeDIF = y
+     set S2TypeBS = y
+  endif   
+  
+  #~# Regime selection:
+  #set S2_Regimes = "all"
+  set S2_Regimes = user_defined
+  if ($S2_Regimes != "all") then 
+     set S2_Regime_TF = y
+     set S2_Regime_TS = y
+     set S2_Regime_SS = y
+     set S2_Regime_NS = y
+     set S2_Regime_NF = y
+     set S2_Regime_U = y
+  endif   
+ 
+  #~# choose which quality of datas are to be plotted from second file
+  #set Stress2Quality = "all"
+  set Stress2Quality = user_defined
+  if ($Stress2Quality != "all") then 
+     set S2QualA = y
+     set S2QualB = y
+     set S2QualC = y
+     set S2QualD = n
+     set S2QualE = n
+  endif   
+
+  #~# Auswahl des zu plottenden Tiefenintervalls
+  set Stress2Depth = all
+  #set Stress2Depth = "user_defined"
+   if ($Stress2Depth != "all") then
+      set S2DepthTop = 0
+      set S2DepthBot = 40
+   endif
+
+  #~# color (R/G/B) of symbols (default colors are: NF red, SS: green, TF: blue;
+  # black will create only black symbols)
+  set Stress2DataColor = default
+  #set Stress2DataColor = "black"
+  #set Stress2DataColor = "user_defined"
+  if ($Stress2DataColor != "default" && $Stress2DataColor != "black" ) then
+    set S2DataTFColor = 125/0/0
+    set S2DataSSColor = 0/0/125
+    set S2DataNFColor = 0/125/0
+    set S2DataUColor = 0/0/0
+  endif  
+  
+  #~# size of symbols (in inches). 
+  # possible are "verytiny" (0.05), "tiny" (0.07), "small" (0.08), "middle" (0.1),
+  # "large" (0.12) or "user_defined".
+  #set Stress2DataSize = "default"
+  set Stress2DataSize = middle
+  if ($Stress2DataSize == "user_defined") then
+    set S2DataQASize = 0.3
+    set S2DataQBSize = 0.24
+    set S2DataQCSize = 0.18
+    set S2DataQDSize = 0.12
+    set S2DataQESize = 0.12
+  endif
+
+  #~# length of line showing the azimuth (in inches)
+  # possible are "verytiny" (0.25), "tiny" (0.3), "small" (0.35), "middle" (0.45),
+  # "large" (0.55), or "user_defined".
+  #set Stress2DataLen = "default"
+  set Stress2DataLen = middle
+  if ($Stress2DataLen == "user_defined") then
+    set S2DataQALen = 0.9
+    set S2DataQBLen = 0.7
+    set S2DataQCLen = 0.5
+    set S2DataQDLen = 0.3
+    set S2DataQELen = 0.1
+  endif
+
+  #~# thickness for outline of symbol (in points)
+  # possible are "small" (1 point), "middle" (2 points), "large" (3 points)
+  # or "user_defined".
+  set Stress2DataT = middle
+  #set Stress2DataT = "user_defined"
+  if ($Stress2DataT == "user_defined") then
+    set S2QualAT = 4
+    set S2QualBT = 4
+    set S2QualCT = 4
+    set S2QualDT = 4
+    set S2QualET = 4
+  endif
+ 
+  #~# plot sitecode used in database next to the symbol
+  set Stress2SC = n
+  if ($Stress2SC == "y") then
+    # color of text
+    set Stress2SCCol = 0/0/0
+    set Stress2SCFontSiz = 6
+  endif
+  
+  #~~# enter filename for third stress data file or set Stress2Data = "no":
+  #---------------------------------------------------------------------------
+  # use this option if you want to plot a second set of stress data with
+  # different colour, size etc.
+  # File format: see above (Stress1Data)
+  set Stress3Data = "no" 
+  
+  #~# Selection of different data types from second data file:
+  #set Stress3Type = "all"
+  set Stress3Type = "user_defined"
+  if ($Stress3Type != "all") then 
+     set S3TypeFMS = "y"
+     set S3TypeFMA = "y"
+     set S3TypeFMF = "y"
+     set S3TypeBO  = "y"
+     set S3TypeOC  = "y"
+     set S3TypeHF  = "y"
+     set S3TypeGI  = "y"
+     set S3TypeDIF = "y"
+     set S3TypeBS  = "y"
+  endif   
+  
+  #~# Regime selection:
+  #set S3_Regimes = "all"
+  set S3_Regimes = user_defined
+  if ($S3_Regimes != "all") then 
+     set S3_Regime_TF = y
+     set S3_Regime_TS = y
+     set S3_Regime_SS = y
+     set S3_Regime_NS = y
+     set S3_Regime_NF = y
+     set S3_Regime_U = y
+  endif   
+ 
+  #~# choose which quality of datas are to be plotted from second file
+  # E-Quality data can not be plotted, they contain no information 
+  # on SH direction.  
+  #set Stress3Quality = "all"
+  set Stress3Quality = "user_defined"
+  if ($Stress3Quality != "all") then 
+     set S3QualA = "y"
+     set S3QualB = "y"
+     set S3QualC = "y"
+     set S3QualD = "y"
+     set S3QualE = "y"
+  endif   
+
+  #~# Auswahl des zu plottenden Tiefenintervalls
+  #set Stress3Depth = "all"
+   set Stress3Depth = "user_defined"
+   if ($Stress3Depth != "all") then
+      set S3DepthTop = 30
+      set S3DepthBot = 60
+   endif
+
+  #~# color (R/G/B) of symbols (default colors are: NF red, SS: green, TF: blue;
+  # black will create only black symbols)
+  #set Stress3DataColor = "default"
+  #set Stress3DataColor = "black"
+  set Stress3DataColor = "user_defined"
+  if ($Stress3DataColor != "default" && $Stress3DataColor != "black" ) then
+    set S3DataTFColor = 125/0/0
+    set S3DataSSColor = 0/125/0
+    set S3DataNFColor = 0/0/125
+    set S3DataUColor = 0/0/0   
+  endif  
+  
+  #~# size of symbols (in inches). 
+  # possible are "verytiny" (0.05), "tiny" (0.07), "small" (0.08), "middle" (0.1),
+  # "large" (0.12) or "user_defined".
+  #set Stress3DataSize = "default"
+  set Stress3DataSize = "user_defined"
+  if ($Stress3DataSize == "user_defined") then
+    set S3DataQASize = 0.1
+    set S3DataQBSize = 0.07
+    set S3DataQCSize = 0.05
+    set S3DataQDSize = 0.02
+    set S3DataQESize = 0.02
+  endif
+
+  #~# length of line showing the azimuth (in inches)
+  # possible are "verytiny" (0.25), "tiny" (0.3), "small" (0.35), "middle" (0.45),
+  # "large" (0.55), or "user_defined".
+  #set Stress3DataLen = "default"
+  set Stress3DataLen = "user_defined"
+  if ($Stress3DataLen == "user_defined") then
+    set S3DataQALen = 0.3
+    set S3DataQBLen = 0.2
+    set S3DataQCLen = 0.1
+    set S3DataQDLen = 0.05
+    set S3DataQELen = 0.01
+  endif
+
+  #~# thickness for outline of symbol (in points)
+  # possible are "small" (1 point), "middle" (2 points), "large" (3 points)
+  # or "user_defined".
+  #set Stress3DataT = "middle"
+  set Stress3DataT = "user_defined"
+  if ($Stress3DataT == "user_defined") then
+    set S3QualAT = 3
+    set S3QualBT = 3
+    set S3QualCT = 3
+    set S3QualDT = 3
+    set S3QualET = 3
+  endif
+ 
+  #~# plot sitecode used in database next to the symbol
+  set Stress3SC = "y"
+  if ($Stress3SC == "y") then
+    # color of text
+    set Stress3SCCol = "0/0/0"
+    set Stress3SCFontSiz = 6
+  endif
+ 
+ 
+  #~~# Legend for stress (oriented) data:
+  #----------------------------------------
+  # NOTE: the symbols in the legend will show the color and the size of the
+  # symbols defined for Stress1Data !
+  # Stress legend is plotted only if you choose a stress data file.
+  set StressLegend = n
+  #---------------------
+  if ($StressLegend == "y") then
+    #~# Position on map:
+    # "ll" = lower left
+    # "lr" = lower right
+    # "ul" = upper left
+    # "ur" = upper right
+    set PosStressLegend = ll
+    
+    set DepthIntLeg = n
+    
+    #~# Size of Legend, possible are "small", "middle", "large" and "huge"
+    # use "middle" for A4, "huge" for a A0 map
+    set SizeStressLegend = middle
+    
+    #~# Background color for stress Legend 
+    set StressLegBackgr = 255/255/255
+    
+  endif
+  
+  $SCRIPTS/CheckIfFileExists $Stress1Data || exit
+
+  echo "Plotting FIRST stress data file:" $Stress1Data:t
+  # set the default values used for plotting the stress data 
+  source $SCRIPTS/DefineDefaultsForStressData
+
+  # set the variables used for CalculateStressData to the values
+  # defined for Stress1Data and run the script.
+  source $SCRIPTS/DefineStress1Data
+  source $SCRIPTS/CalculateStressData
+
+  # check for "no" or "n" for easier handling via the yes_no sub
+  # its not possible to do the first check as its breaks at some other routine...
+#  if ($Stress2Data != "no" && $Stress2Data != "n" ) then
+  if ($Stress2Data != "no" ) then
+    $SCRIPTS/CheckIfFileExists $Stress2Data || exit
+    echo "Plotting SECOND stress data file:" $Stress2Data:t
+    source $SCRIPTS/DefineStress2Data
+    source $SCRIPTS/CalculateStressData
+  endif
+
+  if ($Stress3Data != "no" && $Stress3Data != "no") then
+    $SCRIPTS/CheckIfFileExists $Stress3Data || exit
+    echo "Plotting THIRD stress data file:" $Stress3Data:t
+    source $SCRIPTS/DefineStress3Data
+    source $SCRIPTS/CalculateStressData
+  endif
+    
+
+  if ($StressLegend == "y") then
+    source $SCRIPTS/CreateStressLegend
+    echo "Ploting stress legend at position: "$PosStressLegend
+  endif
+endif
+
+
+#~~# Plot Smoothed Stress Data:
+#------------------------------
+set SmoothData = n
+#----------------------
+if ($SmoothData == "y") then
+  
+  #~# enter file with the smoothed stress data. 
+  # expected file format: one line header, data: latitude!!! longitude!!! azimuth
+  # (output format of smooth -S).
+  # Info: the datapoints will be plotted using psxy -SV (plotting an vector,
+  # the 'vector head' is removed) resulting in lines centered at the locations
+  # specified when calling smooth and directed in the direction of the 
+  # calculated azimuth.
+  set SmSmData = /home/sgreve/casmi-smooth.sdat
+  
+  #~# length of line showing the azimuth (in inches)
+  # possible are "tiny", "small", "middle", "large" or "user_defined".
+  #set SmSmDataLen = "tiny"
+  set SmSmDataLen = tiny
+  if ($SmSmDataLen == "user_defined") then
+    set SmSmDataLen = tiny
+  endif
+
+  #~# color of lines (RGB)
+  set SmSmDataCol = 0/0/0
+
+  #~# thickness of lines (in inches !)
+  set SmSmDataT = 0.001
+  
+  #~# plot info of smoothing parameter, set to "y" or "n"
+  set SmInfo = n
+  
+  $SCRIPTS/CheckIfFileExists $SmSmData || exit
+
+  echo "Plotting smoothed stress data from file:" $SmSmData:t
+  # set the default values used for plotting the smoothed stress data 
+  source $SCRIPTS/PrepareSmoothedStressData
+
+endif
+
+
+set SmoothGridmap = n
+#----------------------
+if ($SmoothGridmap == "y") then
+  
+  #~# enter file with the gridded stress data. 
+  # expected file format: one line header, data: longitude latitude azimuth
+  # (output format of smooth -G).
+  # Info: the datapoints will be plotted using psxy -SV (plotting an vector,
+  # the 'vector head' is removed) resulting in lines centered at the locations
+  # specified when calling smooth and directed in the direction of the 
+  # calculated azimuth.
+  set SmGridData = /home/sgreve/casmi-smooth.grdm
+  
+  #~# length of line showing the azimuth (in inches)
+  # possible are "tiny", "small", "middle", "large" or "user_defined".
+  #set SmGridDataLen = "tiny"
+  set SmGridDataLen = tiny
+  if ($SmGridDataLen == "user_defined") then
+    set SmGridDataLen = tiny
+  endif
+
+  #~# thickness of lines (in inches !)
+  set SmGridDataT = 0.01
+
+  #~# color of lines "-Wp/R/G/B" or "-Ccolor.cpt" 
+  #set SmGridDataCol = "-W1/255/0/0"
+  set SmGridDataCol = -W1/255/0/0
+
+  #~# plot info of smoothing parameter, set to "y" or "n"
+  set SmInfo = n
+    
+  $SCRIPTS/CheckIfFileExists $SmGridData || exit
+
+  echo "Plotting gridmap stress data from file:" $SmGridData:t
+  # set the default values used for plotting the smoothed stress data 
+  source $SCRIPTS/PrepareGridmapStressData
+
+endif
+
+
+set SmoothTraj = n
+#----------------------
+if ($SmoothTraj == "y") then
+  
+  #~# enter file with the smoothed trajectories. 
+  # expected file format: one line header, data: longitude!!! latitude!!! azimuth
+  # (output format of smooth -T).
+  set SmTrajData = /home/sgreve/casmi-smooth.trjs
+  
+  #~# penstyle (thickness in points), color (RGB), and optionally penstyle
+  # of trajectories 
+  set SmTrajDataSiz = "1"
+  set SmTrajDataCol = 255/0/0
+
+  #~# plot info of smoothing parameter, set to "y" or "n"
+  set SmInfo = n
+    
+  $SCRIPTS/CheckIfFileExists $SmTrajData || exit
+
+  echo "Plotting smoothed trajectories from file:" $SmTrajData:t
+
+endif
+
+# SH: 6.Okt98
+# plottet mit FEM berechnetes SH
+#
+set FE_Stress = "n"
+#----------------------
+if ($FE_Stress == "y") then
+  
+  set FE_StressData = ~/CURRENT/ANSYS2GMT/sh.dat
+  
+  #~# length of line showing the azimuth (in inches)
+  # possible are "tiny", "small", "middle", "large" or "user_defined".
+  set SmGridDataLen = tiny
+  set FE_StressDataLen = "user_defined"
+  if ($FE_StressDataLen == "user_defined") then
+    set FE_StressDataLen = 0.2
+  endif
+
+  #~# thickness of lines (in inches !)
+  set FE_StressDataT = 0.001
+
+  #~# Symbol in middle of line
+  set FE_StressPlotSymbol = "y"
+  #------------------------------
+  if ($FE_StressPlotSymbol == "y") then
+  	set FE_StressSymbol = s0.05
+  	set FE_StressSymbolCol = 0/255/0 
+  	set FE_StressSymbolColFil = 0/0/0 
+  	#set FE_StressSymbolCol = -C$HOME/CURRENT/ANSYS2GMT/sh_ori.cpt 
+  endif
+
+  #~# color of lines "-Wp/R/G/B" or "-Ccolor.cpt"
+  # Magnitude-Color-Coding or Azimuth-Color-Coding (defaults)
+  #set FE_StressColCode = "mag"
+  #set FE_StressColCode = "azi"
+  set FE_StressDataCol = "-W1/255/0/0"
+  #set FE_StressDataCol = -C$HOME/CURRENT/ANSYS2GMT/sh_ori.cpt
+
+  $SCRIPTS/CheckIfFileExists $FE_StressData || exit
+
+  echo "Plotting FE_Stress data from file:" $FE_StressData:t
+  # set the default values used for plotting the smoothed stress data
+  source $SCRIPTS/PrepareFE_StressData
+endif
+
+
+#~~# Plot Circle of Constant Radius:
+#------------------------------------
+set PlotCircle = "n"
+#-------------------
+# plot circles of constant radius showing for example the radius within which
+# data for smoothing were used. 
+
+if ($PlotCircle == "y") then
+
+  #~~# File name for circles to be plotted
+  # File format: one line header, data: longitude latitude radius (in km)
+  # Enter full path or relative path + filename.
+  set CircData = testZoomD.circle
+ 
+  # penstyle and color for circles
+  set CircPenSiz = "1"
+  set CircPenCol = "0/0/0"
+
+  $SCRIPTS/CheckIfFileExists $CircData || exit
+
+  echo "Plotting 'Circle' defined in file:" $CircData:t
+  echo " using pen size "$CircPenSiz" in color "$CircPenCol
+     
+  source $SCRIPTS/PlotCircle
+endif
+
+
+#~~#  Plate Motions: 
+#--------------------
+set PlateMotions = y
+#----------------------
+# plot arrows and/or trajectories showing the relative plate motion for 
+# a choosen pair of plates (DeMets, Gordon, Argus and Stein, 1990).
+
+if ($PlateMotions == "y") then
+ 
+  #~# Give a pair of plates for which you want to plot relative plate motions.
+  # To plot relative plate velocities of the plates with respect to a fixed
+  # frame give negative MotionPlates (example: to plot relative movement of 
+  # Eurasia and N. America in a fixed frame give MotionPlates = -10).
+  # See motion data file below.
+  # Available are (1)Africa-Antarctica, (2)Africa-Eurasia, (3)Africa-North_America,
+  # (4)Africa-South America, (5)Austalia-Antarctica, (6)Pacific-Antarctica, 
+  # (7)South America-Antarctica, (8)Arabia-Eurasia, (9)India-Eurasia,
+  # (10)Eurasia-North America, (11)Eurasia-Pacific, (12)Pacific-Australia,
+  # (13)North America-Pacific, (14)Cocos-North America (15)Nazca-Pacific,
+  # (16)Nazca-South America
+  set MotionPlates = 4
+  
+  #~~# plot arrows showing relative plate motion.
+  set MotionArrow = n
+  #---------------------
+
+  if ($MotionArrow == "y") then 
+    #~# name of motion data file:
+    # File Format: one line header; data: longitude latitude of points where 
+    # to show magnitude and direction of motion, first plate with respect to second.
+    # Alternative file format: Headerline, give two blocks of points, 
+    # seperate by ">". 
+    # Velocity at points in first block will be calculated for anticlockwise
+    # rotation with half angular velocity, velocity at points in second block
+    # with clockwise rotation with half angular velocity.
+    # This file format is expected if negative pair of plates is given.
+    set MotionData = $PRIVATDATA/motion.dat
+  
+    #~# scaling for velocity xx inches equals 1cm/year 
+    set MotionVelScale = 0.3937
+  
+    #~# vector shape (arrowwidth/headlength/headwidth), pen width/color and 
+    # arrow fill:
+    set MotionVecShap = 0.02/0.10/0.03
+    set MotionVecCol = "1/0/0/0"      # pen attributes for arrow
+    set MotionVecFil = "200"          # fill color for arrow
+  endif
+   
+  #~~# Plot small circles centered at Euler pole. Equivalent to plotting
+  # trajectories showing the relative plate motion.
+  set MotionTraj = n
+  #-------------------
+  
+  if ($MotionTraj == "y") then
+    #~# distance between trajectories in degrees (radius increment for small
+    # circles centered around Euler pole).
+    set MotionTrajInc = 5
+    
+    #~# penstyle and color for trajectories
+    set MotionTrajPen = 1
+    set MotionTrajCol = 0to
+  endif  
+
+  if ($MotionArrow == "y") then 
+    $SCRIPTS/CheckIfFileExists $MotionData || exit
+    source $SCRIPTS/CalculatePlateMotion
+  
+    echo "Plotting plate motion data from file:" $MotionData:t
+  endif  
+
+  if ($MotionTraj == "y") then 
+    source $SCRIPTS/CalculatePlateTrajectories
+    
+    echo "Plotting plate motion trajectories "
+  endif  
+    
+endif
+
+
+#~~# No Direction Symbols, Point Symbols: for example earthquake data: 
+#---------------------------------------------------------------------
+set Points = 0
+#---------------
+# Used for plotting symbols. 
+# Either give a common symbol size for all points in a file (see below)
+# or give symbol size (in inch) in the third row of the input file and don't
+# specify a symbol size in PointSymbol (below).
+# Set Points to "n" if you do not want to plot any points (rest of this section
+# will be skipped). Otherwise set Points to the number of files you want to 
+# process (number of blocks following).
+# Example: to process 4 blocks with Point"number"Data set Point to 4.
+# this makes it easy to read as many PointData files as you want, just copy the 
+# whole block for one file and change the number in the variables to the next 
+# free number. 
+
+if ($Points != "n" && $Points != "no" ) then
+
+  #~~# First file with no direction symbols:
+  #------------------------------------------
+  #~~# File name for point symbols to be plotted
+  # File format: one line header, data: longitude latitude [symbol size]
+  # Enter full path or relative path + filename.
+  # Set filename to "no" if you want to use only the following files.
+  set Point1Data = /home/jhoehne/casmi/DATA/example_point_data.dat
+  #set Point1Data = "no"
+
+  # Symbol pen attributes:
+  #~# symbol (c means circle) and size (size in inches).
+  # For a list of possible symbols call: man psxy.
+  # Do not give a size if you want to use the third row in the input file for
+  # the symbol size. See: man GMT man page psxy
+  set Point1Symbol = c0.09
+
+  #~# pen thickness and color used for outline
+  set Point1SymbPenSiz = 4
+  set Point1SymbPenCol = 0
+
+  #~# color used for the filling of the symbol
+  set Point1SymbFilCol = 100
+
+###############
+# SH: 6.Okt98 #
+###############
+  #~# optional CPT-File for filling of the symbol
+  set Point1SymbFilCpt = no
+  #set Point1SymbFilCpt = "yes"
+	  #~# Name of CPT-File
+  	  #~# Variables MUST be set even if Point1SymbFilCpt = "no" 
+      set Point1SymbCpt = /home/jhoehne/casmi/DATA/topo_col.cpt
+
+  if ($Point1Data != "no") then 
+     $SCRIPTS/CheckIfFileExists $Point1Data || exit
+
+     echo "Plotting 'Point' data file:" $Point1Data:t
+     echo " using symbol "$Point1Symbol "and pen size "$Point1SymbPenSiz
+     echo " in color "$Point1SymbPenCol" and symbol filling color "$Point1SymbFilCol
+  endif
+  
+  #~~# Second file with no direction symbols:
+  #------------------------------------------
+  #~~# File name for point symbols to be plotted
+  # File format: one line header, data: longitude latitude  [symbol size]
+  # Enter full path or relative path + filename
+  # Set filename to "no" if you want to use only the following files 
+  #set Point2Data = $PRIVATDATA/points.dat
+  #set Point2Data = ~/DISS/GMT3.3.3/job3629_slip.geo 
+  set Point2Data = "no"
+
+  # Symbol pen attributes:
+  #~# symbol (c means circle) and size (size in inches). 
+  # For a list of possible symbols call man psxy.
+  # Do not give a size if you want to use the third row in the input file for
+  # the symbol size. See: man psxy
+  set Point2Symbol = "c0.03"           
+
+  #~# pen thickness and color used for outline
+  set Point2SymbPenSiz = "0"           # pen size (for 0 default is 1)
+  set Point2SymbPenCol = "0"           # pen color
+
+  #~# color used for the filling of the symbol
+  set Point2SymbFilCol = "220"    
+
+###############
+# SH: 6.Okt98 #
+###############
+  #~# optional CPT-File for filling of the symbol
+  set Point2SymbFilCpt = "no"
+  #set Point2SymbFilCpt = "yes"
+	  #~# Name of CPT-File
+  	  #~# Variables MUST be set even if Point2SymbFilCpt = "no" 
+      set Point2SymbCpt = "contour_cmono.cpt"
+
+  if ($Point2Data != "no") then 
+     $SCRIPTS/CheckIfFileExists $Point2Data || exit
+
+     echo "Plotting 'Point' data file:" $Point2Data:t
+     echo " using symbol "$Point2Symbol "and pen size "$Point2SymbPenSiz
+     echo " in color "$Point2SymbPenCol" and symbol filling color "$Point2SymbFilCol
+  endif
+  
+###############
+# SH: 6.Okt98 #
+###############
+  source $SCRIPTS/CreatePointListNew
+endif
+
+
+#~~# Symbols with Labels: Location and names data:
+#--------------------------------------------------
+set Names = 0
+#--------------
+# Used for plotting symbols with labels (example: point for town + name),
+# up to now no possibility to rotate text. 
+# Set Names to "n" if you do not want to plot any symbols with labels,
+# otherwise set Names to the number of files you want to process
+# Example: to process 4 blocks with Name"number"Data set Names to 4
+# this makes it easy to read as many NameData files as you want, just copy the 
+# whole block for one file and change the number in the variables to the next 
+# free number. 
+
+if ($Names != "n" && $Names != "no" ) then
+
+  #~~# First file with location and labels:
+  #----------------------------------------
+  # Set filename to "no" if you only want to use second+following file.
+  # File format: one line header, data: longitude latitude label [justify]
+  # put an 'x' before the label which you do not want to plot.
+  # (for a description of justify see: man pstext). 
+  set Name1Data = /home/jhoehne/casmi/DATA/example_names_data.dat
+  #set Name1Data = "no"
+
+  # Symbol and Text pen attributes (first file):
+  #~# symbol: symbol type (c means circle, s is square) and size (in inches). 
+  # For a list of possible symbols call: man psxy.
+  # See: man psxy
+  set Name1Symbol = c0.05
+
+  #~# pen thickness and color used for outline of symbol
+  set Name1SymbPenSiz = 5
+  set Name1SymbPenCol = 0
+
+  #~# color used for the filling of the symbol
+  set Name1SymbFilCol = 0
+
+  #~# text: color used for text
+  set Name1TextPenCol = 0
+
+  #~# text: font size in points 
+  set Name1TextFontSiz = 10
+ 
+  #~# text: x and y shift in inches (text will be shifted, depending on the
+  # justification set in the NameData file for x and y to avoid overprinting
+  # the symbol.
+  set Name1XShift = 0.05
+  set Name1YShift = 0.05
+
+  if ($Name1Data != "no") then   
+      $SCRIPTS/CheckIfFileExists $Name1Data || exit
+  
+      echo "Plotting labels defined in file:" $Name1Data:t
+      echo " using symbol "$Name1Symbol" with outline color "$Name1SymbPenCol
+      echo " and fill color "$Name1SymbFilCol". Text height used is "$Name1TextFontSiz
+  endif
+
+  #~~# Second File with Location and Labels:
+  #------------------------------------------
+  # Set filename to "no" if you only want to use first file.
+  # File format: see first file.
+  #set Name2Data = $PRIVATDATA/test2.dat
+  set Name2Data = "no"
+
+  # Symbol and Text pen attributes:
+  #~# symbol: symbol type (c means circle, s is square) and size (in inches). 
+  # For a list of possible symbols call man psxy.
+  # See GMT man page psxy
+  set Name2Symbol = "c0.05"            # symbol and size (see gmt psxy manpages)
+
+  #~# pen thickness and color used for outline of symbol
+  set Name2SymbPenSiz = "1"           # pen size
+  set Name2SymbPenCol = "0/0/0"     
+
+  #~# color used for the filling of the symbol
+  set Name2SymbFilCol = "255/255/255"    
+
+  #~# text: color used for text
+  set Name2TextPenCol = "0/0/0"      # black
+
+  #~# text: font size in points 
+  set Name2TextFontSiz = 8
+ 
+  #~# text: x and y shift in inches (text will be shifted, depending on the
+  # justification set in the NameData file for x and y to avoid overprinting
+  # the symbol.
+  set Name2XShift = 0.04
+  set Name2YShift = 0.04
+
+  if ($Name2Data != "no") then 
+      $SCRIPTS/CheckIfFileExists $Name2Data || exit
+  
+      echo "Plotting labels defined in file:" $Name2Data:t
+      echo " using symbol "$Name2Symbol" with outline color "$Name2SymbPenCol
+      echo " and fill color "$Name2SymbFilCol". Text height used is "$Name2TextFontSiz
+  endif
+
+  source $SCRIPTS/CreateNameFile
+endif
+
+
+#~~# Text:
+#----------
+set Text = n
+#--------------
+# Used for plotting text at any location on the map, the location is given 
+# in longitude latitude.
+
+if ($Text == "y" || $Text == "yes") then
+
+  #~~# Name of Text file (full path or relative path to this script)
+  # File Format is: one line header, data: longitude latitude size angle fontno
+  # justify text (equivalent to the file format expected from pstext 
+  # (see: man pstext))
+  set TextData = /home/jhoehne/casmi/DATA/example_text_data.dat
+  
+  #~# Paint a rectangle beneath the text string. Set color and append o to draw
+  # black outline (example 0/255/0o will paint a green rectangle with outline
+  # beneath the text string. Set to "no" if you don't want a rectangle.
+  set TextRecFil = no
+  
+  #~# Set the clearance (in inch) between the text and the surrounding rectangle
+  set TextRecCle = 0.05/0.05
+
+  #~# Font color
+  set TextFilCol = 0
+  
+  $SCRIPTS/CheckIfFileExists $TextData || exit
+
+  echo "Plotting text defined in file:" $TextData:t
+  echo " using text color "$TextFilCol
+endif
+ 
+
+#~~# Lines or Polygones:
+#------------------------
+set Polygons = n
+#------------------
+# Used for plotting [multiple segment] polygons or lines with the same pen 
+# attributes and (if choosen) fill. Example: fracture zones, isolines ...
+# Set Polygons to "n" if you do not want to plot any Polygon lines,
+# otherwise set Polygon to the number of files you want to process
+# Example: to process 4 blocks with Polygon"number"Data set Polygons to 4
+# this makes it easy to read as many PolygonData files as you want, just copy the 
+# whole block for one file and change the number in the variables to the next free
+# number. 
+
+
+if ($Polygons != "n" && $Polygons != "no") then
+  #~~# First polygon file :
+  #-------------------------
+  #~~# name of polygon file.
+  # File format: one line header, data: longitude latitude;
+  # seperate multiple segments with '>'
+  # set filename to "no" if you want to use only following files
+  set Polyg1Data = /home/sgreve/gmt/DATA/faults_israel_fein.txt
+
+  #~# pen attributes for polygons:
+  set Polyg1PenSiz = 12
+  set Polyg1PenCol = 0
+  
+  #~# fill for polygon lines: if you set a fill, the polygon lines will be closed 
+  # automaticaly. Set the fill to "no" if you do not want filled polygon lines.
+  # For closed, but not filled polygons set fill to "close".
+  #set Polyg1FilCol = "0/0/255"     # filling of polygones, closed automatically
+  set Polyg1FilCol = no
+  #set Polyg1FilCol = "close"
+  
+  if ($Polyg1Data != "no") then 
+    $SCRIPTS/CheckIfFileExists $Polyg1Data || exit
+
+    echo "Plotting lines/polygones defined in file:" $Polyg1Data:t
+    echo " using pen atributes "$Polyg1PenSiz/$Polyg1PenCol
+  endif
+  
+  #~~# Second polygon file :
+  #-------------------------
+  #~~# name of polygon file.
+  # file format: one line header, data: longitude latitude;
+  # seperate multiple segments with '>'
+  set Polyg2Data = "no" 
+
+  #~# pen attributes for polygons:
+  #set Polyg2PenSiz = "1"            # pen size of polygones
+  #set Polyg2PenCol = "0ta"          # pen color of polygones
+  
+  #~# fill for polygon lines: if you set a fill, the polygon lines will be closed 
+  # automaticaly. Set the fill to "no" if you do not want filled polygon lines.
+  # For closed, but not filled polygons, set fill to "close".
+  #set Polyg2FilCol = "0/0/255"    # filling of polygones, closed automatically
+  #set Polyg2FilCol = "no"          # no filling of polygones, polygons are not closed
+  #set Polyg2FilCol = "close"
+
+  if ($Polyg2Data != "no") then 
+    $SCRIPTS/CheckIfFileExists $Polyg2Data || exit
+
+    source $SCRIPTS/CreatePolygList
+    echo "Plotting lines/polygones defined in file:" $Polyg2Data:t
+    echo " using pen atributes "$Polyg2PenSiz/$Polyg2PenCol
+  endif
+  
+  source $SCRIPTS/CreatePolygList
+endif
+
+
+#~~# Muliple Line or Polygon file including plot information:
+#-------------------------------------------------------------
+set MultiPolygons = "n"
+#---------------------
+# Set MultiPolygons to "n" if you do not want to plot any MultiPoligon files,
+# otherwise set MultiPolygon to the number of files you want to process.
+# Tested for up to 1000 segments.
+
+if ($MultiPolygons != "n" && $MultiPolygons != "no") then
+
+  #~~# First multiple polygon file :
+  #----------------------------------
+  #~~# name of multiple polygon file 
+  # File Format: one line header
+  # one or more data segments, data: longitude latitude
+  # Each segment seperated by 
+  # [x], >, Segment name, pen style (for example 4/0/0/0ta), fill pattern
+  # If the separation line starts with an "x" it is omitted. 
+  #set MPolyg1Data = ./Granu/goodies/geology.gmt
+  set MPolyg1Data = $PRIVATDATA/multipoly.dat
+  
+  #~# set to "y" to ignore fill given in mulitpolygon file for the single segments
+  set MPolyg1FilIgnore = "y"
+ 
+  if ($MPolyg1Data != "no") then 
+    $SCRIPTS/CheckIfFileExists $MPolyg1Data || exit
+    
+    echo "Plotting multiple lines/polygones defined in file:" $MPolyg1Data:t
+  endif
+
+  #~~# Second multiple polygon file :
+  #----------------------------------
+  #~~# name of multiple polygon file, set to "no" if you want to use only the 
+  # following files. Name of this file should differ in the first part of the 
+  # name from first file (Example: blabla.dat and blybla.dat is ok. blabla.dat
+  # and blabla.new is not ok. Different directories is not enough).
+  # File Format: see first file
+  #set MPolyg2Data = $PRIVATDATA/multipolyg.dat
+  set MPolyg2Data = "no"
+
+  #~# set to "y" to ignore fill given in mulitpolygon file for the single segments
+  set MPolyg2FilIgnore = "y"
+ 
+  if ($MPolyg2Data != "no") then 
+    $SCRIPTS/CheckIfFileExists $MPolyg2Data || exit
+    
+    echo "Plotting multiple lines/polygones defined in file:" $MPolyg2Data:t
+  endif
+ 
+
+  source $SCRIPTS/CreateMultiPolygList
+endif
+
+
+
+####################################################
+## Added psmeca to plot focal mechanism solutions  #
+## 1.11.02 JH                                      #
+####################################################
+# expected format: Harvard CMT solutions for psmeca
+# lon lat depth mrr mtt mpp mrt mrp mtp iexp name
+
+set PlotCMT = n
+set CMTFile = /home/jhoehne/casmi/test/test_cmt.dat
+#set CMTFile = $HOME/casmi/test/test_cmt.dat
+if ($PlotCMT != "n") then
+    # PlotType: m for full, d for only DC Component
+    set CMTPlotType = d
+    set CMTScale = 1.5
+    set CMTFontSize = 10
+    set CMTOffset = 1
+    set CMTHeader = 6
+    set CMTThrustFill = 255/0/0
+    set CMTExtFill = 0/0/255
+   $SCRIPTS/CheckIfFileExists $CMTFile || exit
+   echo "Plotting CMT solutions from file: $CMTFile"
+endif
+ 
+
+
+
+
+
+      
+
+# create the c-shell script "$TEMP/GmtScript" containing the gmt commands.
+source $SCRIPTS/CreateGmtScriptNew
+
+
+# change attributes of "$TEMP/GmtScript" so that it is executable.
+chmod u+x $TEMP/GmtScript
+
+# execute "$TEMP/GmtScript" script
+echo "Executing GMT script "
+echo " " 
+$TEMP/GmtScript
+
+
+echo " "
+#echo " ... calling postscript-viewer for file $PsName"
+echo " ... Finished the ps file: $PsName"
+echo " "
+
+# Copying the selected stress data to . so that it can be used later on
+awk '{print $3, $4, $5, $6, $7, $8, $9, $10}' $TEMP/StressData.select >./StressData.select
+
+# deleting the temp files and directories
+#rm -rf $TEMP $TEMP1 $TEMP2
+
+# call program to show postscript file
+#  $GHOSTSCRIPT $PsName

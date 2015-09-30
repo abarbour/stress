@@ -1,0 +1,596 @@
+echo " ... working in skript CalculateScale"
+
+# define some defaults
+if (!($?MapShape)) then
+   set MapShape = "bounded"
+endif
+if (!($?Scale)) then
+   set Scale = "default"
+endif
+if (!($?lon_pro)) then
+   set lon_pro = "default"
+endif
+if (!($?lat_pro)) then
+   set lat_pro = "default"
+endif
+if (!($?stan1_pro)) then
+   set stan1_pro = "default"
+endif
+if (!($?stan2_pro)) then
+   set stan2_pro = "default"
+endif
+if (!($?CentralMerid)) then
+   set CentralMerid = "default"
+endif      
+
+
+
+
+set stop = "false"
+
+# FIRST: check if lat1 is smaller lat2 and lon1 is smaller lon2. Otherwise 
+# GMT will be very confused.
+echo $c1_lon '>' $c2_lon > $TEMP/check
+set Check = `awk -f $SCRIPTS/comp.awk $TEMP/check`  
+
+if ($Check == "true") then
+  echo "ERROR: longitude 1 (c1_lon) has to be smaller than longitude 2 (c2_lon)"
+  echo "  Otherwise GMT will be very confused"
+  set stop = "true"
+  exit
+endif   
+
+echo $c1_lat '>' $c2_lat > $TEMP/check
+set Check = `awk -f $SCRIPTS/comp.awk $TEMP/check`  
+
+if ($Check == "true") then
+  echo "ERROR: latitude 1 (c1_lat) has to be smaller than latitude 2 (c2_lat)"
+  echo "  Otherwise GMT will be very confused"
+  set stop = "true"
+  exit
+endif   
+
+
+# SECOND: some Definitions used for GMT calls:
+# set map shape to bounded if projection used is Mercator or Orthographic or
+# Mollweide, this avoids a lot of problems
+if ($ProjectionName == "Mercator" || $ProjectionName == "Orthographic" \
+|| $ProjectionName == "Mollweide") then
+  set MapShape = "bounded"
+endif 
+ 
+# Range of map (for Mollweide and Orthographic only the whole earth is possible,
+# therefor set the range to -R-180/180/-90/90)
+if ($MapShape == "rectangular") then 
+  set GMTRange = "-R"$c1_lon"/"$c1_lat"/"$c2_lon"/"$c2_lat"r"
+else if ($MapShape == "bounded") then
+  if ($ProjectionName == "Mollweide" || $ProjectionName == "Orthographic") then 
+    set GMTRange = "-R-180/180/-90/90"
+    set c1_lon = -180
+    set c2_lon = 180
+    set c1_lat = -90
+    set c2_lat = 90
+  else 
+    set GMTRange = "-R"$c1_lon"/"$c2_lon"/"$c1_lat"/"$c2_lat
+  endif
+else 
+  echo "WARNING: could't identify map shape. Use 'bounded'"
+  set GMTRange = "-R"$c1_lon"/"$c2_lon"/"$c1_lat"/"$c2_lat
+endif
+   
+# Projection, standard parallels and projection center if necessary:
+set InfoStandParalles = "no standard paralles needed for this projection"
+set InfoStandParallStr = ""
+set InfoProjCenter = "no projection center needed for this projection"
+set InfoProjCenterStr = ""
+
+# Projection center 
+if ($ProjectionName == "Albers_Conic_Equal-Area" || \
+    $ProjectionName == "Lambert_Conic_Conformal" || \
+    $ProjectionName == "Lambert_Azimuthal_Equal-Area" || \
+    $ProjectionName == "Orthographic" || \
+    $ProjectionName == "Oblique_Mercator" ) then
+
+  # check if projection center is set to default
+  if ($lon_pro == "default" || $lat_pro == "default") then 
+     set lon_pro = `awk -v x=$c1_lon -v y=$c2_lon 'BEGIN{val=(x+y)/2; print val}'`
+     set lat_pro = `awk -v x=$c1_lat -v y=$c2_lat 'BEGIN{val=(x+y)/2; print val}'`
+  endif
+  set InfoProjCenter = "Projection center is "$lon_pro" deg longitude "$lat_pro" deg latitude"
+  set InfoProjCenterStr = "; projection center $lon_pro/$lat_pro"
+endif
+
+
+# Central Meridian 
+if ($ProjectionName == "Mollweide") then
+  # check if central meridian is set to default
+  if ($CentralMerid == "default") then
+     set CentralMerid = 0
+  endif
+  set InfoProjCenter = "Central Meridian is $CentralMerid"
+  set InfoProjCenterStr = "; central merid. is $CentralMerid"
+endif
+
+if ($ProjectionName == "Transverse_Mercator") then
+  # check if central meridian is set to default
+  if ($CentralMerid == "default") then
+     set CentralMerid = `awk -v x=$c1_lon -v y=$c2_lon 'BEGIN{val=((x+y)/2); print val}'`
+  endif
+  set InfoStandParalles = "Central Meridian is: $CentralMerid"
+  set InfoStandParallStr = "; cental meridian: $CentralMerid"
+endif
+
+  
+# Standard Parallels     
+if ($ProjectionName == "Albers_Conic_Equal-Area" || \
+    $ProjectionName == "Lambert_Conic_Conformal") then
+  # check if standard paralles are set to default
+  if ($stan1_pro == "default" || $stan2_pro == "default") then 
+     set stan1_pro = `awk -v x=$c1_lat -v y=$c2_lat 'BEGIN{val=(y-x)/3+x; print val}'`
+     set stan2_pro = `awk -v x=$c1_lat -v y=$c2_lat 'BEGIN{val=(y-x)/3*2+x; print val}'`
+  endif
+  # check if standard paralles are possible. If standard paralles one is equal 
+  # +/- standard parallel 2 you can not create a conical projection.
+  echo $stan1_pro 'absequ' $stan2_pro > $TEMP/check
+  set Check = `awk -f $SCRIPTS/comp.awk $TEMP/check`  
+
+  if ($Check == "true") then
+    echo "ERROR: (default) standard paralles not possible. "
+    echo "  standand parallel 1 is equal  (-1)*standard parallel 2"
+    echo "  this is not possible for conic projection."
+    set stop = "true"
+    exit
+  endif   
+  
+  set InfoStandParalles = "Standard paralles used are "$stan1_pro" and "$stan2_pro" deg latitude"
+  set InfoStandParallStr = "; standard parallels $stan1_pro $stan2_pro"
+
+endif
+
+# Oblique Equator                  # NOT used at the moment
+if ($ProjectionName == "Oblique_Mercator") then
+  # check if oblique equator azimuth is set to default
+  if ($ObliqEquAzi == "default") then
+     set ObliqEquAzi = 0
+  endif
+  set InfoStandParalles = "Azimuth of Oblique Equator is: $ObliqEquAzi"
+  set InfoStandParallStr = "; azimuth of obl. equator $ObliqEquAzi"
+endif
+
+
+# define the GMTProjection
+if ($ProjectionName == "Mercator") then
+   if ($Scale == "default") then
+     set GMTProjection = "-JM"$PlotWidth
+   else
+     set GMTProjection = "-Jm"$Scale
+   endif
+
+else if ($ProjectionName == "Oblique_Mercator") then    # NOT used at the moment
+   if ($Scale == "default") then
+     set GMTProjection = "-JOa$lon_pro/$lat_pro/$ObliqEquAzi/$PlotWidth"
+   else
+     set GMTProjection = "-Joa$lon_pro/$lat_pro/$ObliqEquAzi/$Scale"
+   endif
+
+else if ($ProjectionName == "Transverse_Mercator") then
+   if ($Scale == "default") then
+     set GMTProjection = "-JT$CentralMerid/$PlotWidth"
+   else
+     set GMTProjection = "-Jt$CentralMerid/$Scale"
+   endif
+
+else if ($ProjectionName == "Orthographic") then
+   if ($Scale == "default") then
+     set GMTProjection = "-JG"$lon_pro"/"$lat_pro"/"$PlotWidth
+   else
+     set GMTProjection = "-Jg"$lon_pro"/"$lat_pro"/"$Scale
+   endif
+     
+else if ($ProjectionName == "Albers_Conic_Equal-Area") then 
+   if ($Scale == "default") then
+     set GMTProjection = "-JB"$lon_pro"/"$lat_pro"/"$stan1_pro"/"$stan2_pro"/"$PlotWidth
+   else
+     set GMTProjection = "-Jb"$lon_pro"/"$lat_pro"/"$stan1_pro"/"$stan2_pro"/"$Scale
+   endif
+
+else if ($ProjectionName == "Lambert_Azimuthal_Equal-Area") then 
+   if ($Scale == "default") then
+     set GMTProjection = "-JA"$lon_pro"/"$lat_pro"/"$PlotWidth
+   else
+     set GMTProjection = "-Ja"$lon_pro"/"$lat_pro"/"$Scale
+   endif
+
+else if ($ProjectionName == "Lambert_Conic_Conformal") then 
+   if ($Scale == "default") then
+     set GMTProjection = "-JL"$lon_pro"/"$lat_pro"/"$stan1_pro"/"$stan2_pro/$PlotWidth
+   else
+     set GMTProjection = "-Jl"$lon_pro"/"$lat_pro"/"$stan1_pro"/"$stan2_pro/$Scale
+   endif
+
+else if ($ProjectionName == "Mollweide") then
+   if ($Scale == "default") then
+     set GMTProjection = "-JW"$CentralMerid"/"$PlotWidth
+   else
+     set GMTProjection = "-Jw"$CentralMerid"/"$Scale
+   endif
+     
+endif 
+
+
+# THIRD: calculate the MAP SCALE:
+# calculate points needed for projection
+
+# calculate the latitude where to determine map scale, with Mercator equator is
+# used. For Mollweide scale is calculated at 40.73 deg latitude (see GMT-Cookbook).
+# 
+if ( $ProjectionName == "Mercator" ) then
+  set lat_midle = 0
+  set lon_midle = `awk -v x=$c1_lon -v y=$c2_lon 'BEGIN{val=((x+y)/2); print val}'`
+  set MapScaleLoc = " at equator"
+else if ( $ProjectionName == "Oblique_Mercator" ) then  # NOT used at the Moment
+  set lat_midle = 0
+  set lon_midle = `awk -v x=$c1_lon -v y=$c2_lon 'BEGIN{val=((x+y)/2); print val}'`
+  set MapScaleLoc = " at equator"
+else if ( $ProjectionName == "Transverse_Mercator" ) then  
+  # for Transverse Mercator scale is true along tangent N-S cylinder
+  set lat_midle = `awk -v x=$c1_lat -v y=$c2_lat 'BEGIN{val=((x+y)/2); print val}'`
+  set lon_midle = $CentralMerid
+  set MapScaleLoc = " along central meridian"
+else if ( $ProjectionName == "Mollweide" ) then 
+  set lat_midle = 40.730
+  set lon_midle = $CentralMerid 
+  set MapScaleLoc = " at equator"
+else if ( $ProjectionName == "Orthographic" ) then
+  set lat_midle = $lat_pro
+  set lon_midle = $lon_pro 
+  set MapScaleLoc = " at projection center"
+else if ( $ProjectionName == "Lambert_Azimuthal_Equal-Area") then
+  set lat_midle = $lat_pro
+  set lon_midle = $lon_pro
+  set MapScaleLoc = " at projection center"
+else 
+  set lat_midle = $stan1_pro
+  set lon_midle = $lon_pro
+  set MapScaleLoc = " at standard parallels"
+endif
+
+if ($ProjectionName == "Transverse_Mercator" ) then
+  # for Transverse_Mercator Projection Scale is true along the central Meridian
+  set lon_midle_m02 = $CentralMerid
+  set lon_midle_p02 = $CentralMerid
+  
+  set lat_midle_m02 = `awk -v x=$lat_midle 'BEGIN{val=(x-0.2); print val}'`
+  set lat_midle_p02 = `awk -v x=$lat_midle 'BEGIN{val=(x+0.2); print val}'` 
+else
+  # for all other projections we calculate scale along a circle of constant latitude
+  set lon_midle_m02 = `awk -v x=$lon_midle 'BEGIN{val=(x-0.2); print val}'`
+  set lon_midle_p02 = `awk -v x=$lon_midle 'BEGIN{val=(x+0.2); print val}'`
+
+  set lat_midle_m02 = $lat_midle
+  set lat_midle_p02 = $lat_midle
+endif
+ 
+# Calculate the projected points (in inches)
+$GMT/mapproject   $GMTRange $GMTProjection <<END > $TEMP/tempscale.file
+$lon_midle_m02 $lat_midle_m02 
+$lon_midle_p02 $lat_midle_p02
+END
+
+set MapScale = `awk -f $SCRIPTS/scale.awk -v lat=$lat_midle  $TEMP/tempscale.file`
+ 
+# create string containing the mapscale info
+ 
+if ( $Scale != "default" ) then
+  set InfoMapScaleStr = `echo "scale: $Scale $MapScaleLoc"`
+else
+  set InfoMapScaleStr = `echo "scale: 1:$MapScale$MapScaleLoc"`
+endif    
+
+
+# FOURTH: 
+# PlotHeight and PlotWidth are used for the Linear Range GMTLinRange, used 
+# for plotting the stress symbols and the projected grid. 
+# calculate the PlotHeight, and PlotWidth (plotwidth may have changed if a
+# scale like 1:xxxx is given)
+ 
+if ($ProjectionName == "Orthographic") then
+  # For the Orthographic projection the PlotHeight is equal to the PlotWidth
+  # Projecting the upper right corner makes no sense.
+  if ($Scale == "default" ) then 
+     set PlotHeight = $PlotWidth
+  else 
+     # project 0/90 and 0/-90 (=0.0) with a projection of -Jg0/0/$Scale
+     $GMT/mapproject   -R0/360/-90/90 -Jg0/0/$Scale <<END > $TEMP/temp.file
+     0 90
+END
+     set PlotHeight = `awk '{print $2}' $TEMP/temp.file`
+     set PlotWidth = `awk '{print $1*2}' $TEMP/temp.file`
+  endif
+ 
+else if  ($ProjectionName == "Mollweide") then
+
+  # calculate the PlotHeight by projecting the point CentralMerid/90 and 
+  # the PlotWidth by projecting the point 0/CentralMerid+180
+  
+  set CentralMeridp180 =  `awk -v x=$CentralMerid 'BEGIN{val=x+180; print val}'`
+
+  $GMT/mapproject   $GMTRange $GMTProjection <<END > $TEMP/temp.file
+  $CentralMerid 90
+END
+  set PlotHeight = `awk '{print $2}' $TEMP/temp.file`
+
+
+  $GMT/mapproject   $GMTRange $GMTProjection <<END > $TEMP/temp.file
+  $CentralMeridp180 0
+END
+  set PlotWidth = `awk '{print $1}' $TEMP/temp.file`
+  
+else  
+
+  # For the other projections (cylindrical and conical), use GMT mapproject 
+  # to Calculate PlotHeight and PlotWidth.
+
+  # For BOUNDED maps the point 0/0 is the crossing point of the two 
+  # horizontal/vertical lines touching hte bounded map at the south and west.
+  # On the northern hemisphere the plotheigth is calculated by projecting 
+  # the upper right corner of the area to be plotted, the projection of the
+  # lower right corner gives the plotwidth.
+  # On the southern hemisphere, projecting the upper right corner is not 
+  # enough. The point with the larges y-coordinate is calculated for 
+  # the central meridian.
+  
+  # For Transverse Mercator we can create maps which look like a segment of 
+  # a basket ball (smaller at top and bottom than in the middle). This happens
+  # if we include the equator in the map.
+  # Then, compare the x values and take the larger one. This has to be done
+  # for bounded maps, otherwise the linear range is to small on the right-
+  # handside of the bounded maps.
+
+  if ($MapShape == "bounded") then
+
+    # check if equator is included in the map:
+
+    echo $c1_lat '<' 0 > $TEMP/check
+    set Check1 = `awk -f $SCRIPTS/comp.awk $TEMP/check`  
+
+    echo $c2_lat '>' 0 > $TEMP/check
+    set Check2 = `awk -f $SCRIPTS/comp.awk $TEMP/check`  
+
+    if ($ProjectionName == "Transverse_Mercator" && $Check1 == "true" && $Check2 == "true" ) then
+      # equator is included in map
+      
+      # project lower right corner
+      $GMT/mapproject   $GMTRange $GMTProjection <<END > $TEMP/temp.file
+      $c2_lon $c1_lat
+END
+      set lin_x1 = `awk '{print $1}' $TEMP/temp.file`
+      set lin_y1 = `awk '{print $2}' $TEMP/temp.file`
+
+      # project upper right corner
+      $GMT/mapproject   $GMTRange $GMTProjection <<END > $TEMP/temp.file
+      $c2_lon $c2_lat
+END
+
+      set lin_x2 = `awk '{print $1}' $TEMP/temp.file`
+      set lin_y2 = `awk '{print $2}' $TEMP/temp.file`
+
+      # project point on equator
+      $GMT/mapproject   $GMTRange $GMTProjection <<END > $TEMP/temp.file
+      $c2_lon 0
+END
+
+      set lin_x3 = `awk '{print $1}' $TEMP/temp.file`
+      set lin_y3 = `awk '{print $2}' $TEMP/temp.file`
+
+      set tempwidth = `awk -v x=$lin_x2 -v y=$lin_x1 'BEGIN{if(x>y) {print x} else {print y}}' `
+      set tempheight = `awk -v x=$lin_y2 -v y=$lin_y1 'BEGIN{if(x>y) {print x} else {print y}}' `
+
+      set PlotWidth = `awk -v x=$lin_x3 -v y=$tempwidth 'BEGIN{if(x>y) {print x} else {print y}}' `
+      set PlotHeight = `awk -v x=$lin_y3 -v y=$tempheight 'BEGIN{if(x>y) {print x} else {print y}}' `
+
+    else 
+      # Transverse_Mercator projection and equator is not included in map
+      # or conical projection resulting in cake shape
+      # project lower right corner
+      $GMT/mapproject   $GMTRange $GMTProjection <<END > $TEMP/temp.file
+      $c2_lon $c1_lat
+END
+      set lin_x1 = `awk '{print $1}' $TEMP/temp.file`
+      set lin_y1 = `awk '{print $2}' $TEMP/temp.file`
+
+      # project upper right corner
+      $GMT/mapproject   $GMTRange $GMTProjection <<END > $TEMP/temp.file
+      $c2_lon $c2_lat
+END
+      set lin_x2 = `awk '{print $1}' $TEMP/temp.file`
+      set lin_y2 = `awk '{print $2}' $TEMP/temp.file`
+      
+      # project central meridian/(projection center longitude) and c2_lat
+      if ($ProjectionName == "Transverse_Mercator") then
+        $GMT/mapproject   $GMTRange $GMTProjection <<END > $TEMP/temp.file
+        $CentralMerid $c2_lat
+END
+        set lin_x3 = `awk '{print $1}' $TEMP/temp.file`
+        set lin_y3 = `awk '{print $2}' $TEMP/temp.file`
+      else 
+        $GMT/mapproject   $GMTRange $GMTProjection <<END > $TEMP/temp.file
+        $lon_pro $c2_lat
+END
+        set lin_x3 = `awk '{print $1}' $TEMP/temp.file`
+        set lin_y3 = `awk '{print $2}' $TEMP/temp.file`
+      endif
+             
+      # choose the larger one
+      set PlotWidth = `awk -v x=$lin_x2 -v y=$lin_x1 'BEGIN{if(x>y) {print x} else {print y}}' `
+      set PlotHeight = `awk -v x=$lin_y2 -v y=$lin_y1 'BEGIN{if(x>y) {print x} else {print y}}' `
+
+      set PlotHeight = `awk -v x=$PlotHeight -v y=$lin_y3 'BEGIN{if(x>y) {print x} else {print y}}' `
+ 
+    endif
+  
+  else   
+    # MapShape is rectangular. Here everything is easy. We just have 
+    # to project the upper right corner of the desired area. 
+
+    $GMT/mapproject   $GMTRange $GMTProjection <<END > $TEMP/temp.file
+    $c2_lon $c2_lat
+END
+
+    set PlotWidth = `awk '{print $1}' $TEMP/temp.file`
+    set PlotHeight = `awk '{print $2}' $TEMP/temp.file`
+  endif
+
+endif  
+
+# Check if plot fits on paper
+
+set UsedPaperHeight =  `awk -v x=$PlotHeight -v y=$BottomMargin 'BEGIN{val=x+y+0.75; print val}'`
+echo $PaperHeight '<' $UsedPaperHeight > $TEMP/check
+set Check = `awk -f $SCRIPTS/comp.awk $TEMP/check`  
+
+if ($Check == "true") then
+  echo "WARNING: PlotHeight resulting from scale and projection is too large"
+  echo "  either choose a different area or if possible Portrait as paper orientation"
+  echo "  and re run the script ..."
+  if ($INTERACTIVE == "true") then 
+    echo "  DO YOU WANT TO CONTINUE (y/n: default n)"
+    set Continue = $< 
+    if ($Continue != "y") then 
+      echo "... stopped"
+      set stop = "true"
+      exit
+    endif   
+  endif
+endif
+
+# set the coordinates for location stressdata filter. For 'bounded' maps this
+# coordinates are equal to the lat, lon coordinates given for the map. For 
+# rectangular maps some datapoints at the edges will be missing when using the
+# original coordinates. In this case we use the coordinates calculated for the 
+# grid-file (the coordinates given here will be overwritten in section FIFTH)
+set s_lon1 = $c1_lon 
+set s_lon2 = $c2_lon 
+set s_lat1 = $c1_lat 
+set s_lat2 = $c2_lat 
+
+
+# FIFTH: calculate range of gridfile and range for location filter of stress
+# data (only needed if MapShape is rectangular)
+# Range of Topo-Grid-File to be extracted, range of stress datas to be extracted
+# from stress file: 
+
+if ($MapShape == "rectangular") then
+  # A part of the grid would be missing on the left hand side and on top 
+  # when plotting rectangular maps on the northern hemisphere or on the right
+  # hand side and the bottom when plotting a rectangular map on the southern 
+  # hemisphere !.
+
+  # Calculate the x location of the central Meridian, or the x location 
+  # of the projection center 
+  
+  # projection with central meridian
+  if ($ProjectionName == "Transverse_Mercator") then
+     # project any point on the central meridian (vertical on map)
+     $GMT/mapproject   $GMTRange $GMTProjection <<END > $TEMP/temp.file
+     $CentralMerid $c1_lat
+END
+     set x_cent = `awk '{print $1}' $TEMP/temp.file`
+  else
+  # projections with projection center
+     # project the projection center
+     $GMT/mapproject   $GMTRange $GMTProjection <<END > $TEMP/temp.file
+     $lon_pro $lat_pro
+END
+     set x_cent = `awk '{print $1}' $TEMP/temp.file`
+  endif
+         
+  # Calculate the lat lon coordinates of point 0/0 (a), 0/PlotHeight (b),  
+  # (PlotWidth/2)/0 (c), (PlotWidth/2)/PlotHeight (d), PlotWidth/0 (e)
+  # PlotWidth/PlotHeight (f) x_cent/PlotHeight (g) and x_cent/0 (h) 
+
+  set PlotWidthHalf = `awk -v x=$PlotWidth 'BEGIN{val=x/2; print val}'`
+
+  $GMT/mapproject   $GMTRange $GMTProjection -I <<END > $TEMP/temp.file
+  0 0
+END
+  set lon_a = `awk '{print $1}' $TEMP/temp.file`
+  set lat_a = `awk '{print $2}' $TEMP/temp.file`
+
+  $GMT/mapproject   $GMTRange $GMTProjection -I <<END > $TEMP/temp.file
+  0 $PlotHeight
+END
+  set lon_b = `awk '{print $1}' $TEMP/temp.file`
+  set lat_b = `awk '{print $2}' $TEMP/temp.file`
+ 
+  $GMT/mapproject   $GMTRange $GMTProjection -I <<END > $TEMP/temp.file
+  $PlotWidthHalf 0
+END
+  set lon_c = `awk '{print $1}' $TEMP/temp.file`
+  set lat_c = `awk '{print $2}' $TEMP/temp.file`
+ 
+  $GMT/mapproject   $GMTRange $GMTProjection -I <<END > $TEMP/temp.file
+$PlotWidthHalf $PlotHeight
+END
+  set lon_d = `awk '{print $1}' $TEMP/temp.file`
+  set lat_d = `awk '{print $2}' $TEMP/temp.file`
+
+  $GMT/mapproject   $GMTRange $GMTProjection -I <<END > $TEMP/temp.file
+  $PlotWidth 0
+END
+  set lon_e = `awk '{print $1}' $TEMP/temp.file`
+  set lat_e = `awk '{print $2}' $TEMP/temp.file`
+
+  $GMT/mapproject   $GMTRange $GMTProjection -I <<END > $TEMP/temp.file
+  $PlotWidth $PlotHeight
+END
+  set lon_f = `awk '{print $1}' $TEMP/temp.file`
+  set lat_f = `awk '{print $2}' $TEMP/temp.file`
+
+  $GMT/mapproject   $GMTRange $GMTProjection -I <<END > $TEMP/temp.file
+  $x_cent $PlotHeight
+END
+  set lon_g = `awk '{print $1}' $TEMP/temp.file`
+  set lat_g = `awk '{print $2}' $TEMP/temp.file`
+
+  $GMT/mapproject   $GMTRange $GMTProjection -I <<END > $TEMP/temp.file
+  $x_cent 0
+END
+  set lon_h = `awk '{print $1}' $TEMP/temp.file`
+  set lat_h = `awk '{print $2}' $TEMP/temp.file`
+
+  set lon_min = `awk -v x=$lon_a -v y=$lon_b 'BEGIN{if(x<y) {print x} else {print y}}' `
+  set lon_max = `awk -v x=$lon_e -v y=$lon_f 'BEGIN{if(x>y) {print x} else {print y}}' `
+
+  set lat_min = `awk -v x=$lat_a -v y=$lat_c 'BEGIN{if(x<y) {print x} else {print y}}' `
+  set lat_min = `awk -v x=$lat_min -v y=$lat_e 'BEGIN{if(x<y) {print x} else {print y}}' `
+  set lat_min = `awk -v x=$lat_min -v y=$lat_h 'BEGIN{if(x<y) {print x} else {print y}}' `
+
+  set lat_max = `awk -v x=$lat_b -v y=$lat_d 'BEGIN{if(x>y) {print x} else {print y}}' `
+  set lat_max = `awk -v x=$lat_max -v y=$lat_f 'BEGIN{if(x>y) {print x} else {print y}}' `              
+  set lat_max = `awk -v x=$lat_max -v y=$lat_g 'BEGIN{if(x>y) {print x} else {print y}}' `              
+
+  set GMTGridRange = "-R$lon_min/$lon_max/$lat_min/$lat_max"
+echo "vero GMTGridRange $GMTGridRange" 
+  set s_lon1 = $lon_min 
+  set s_lon2 = $lon_max 
+  set s_lat1 = $lat_min 
+  set s_lat2 = $lat_max 
+
+else if ($MapShape == "bounded") then
+  # set Grid range special if Mollweide is used (here projection needs range
+  # from -180 to 180
+  if ($ProjectionName == "Mollweide") then
+    #set GMTGridRange = "-R"$c1_lon"/"$c2_lon"/"$c1_lat"/"$c2_lat
+    set GMTGridRange = "-R-180/180/-90/90"
+    set s_lon1 = -180
+    set s_lon2 = 180 
+    set s_lat1 = -90 
+    set s_lat2 = 90 
+  else 
+    set GMTGridRange = $GMTRange
+  endif
+  
+endif
+
+echo " ... ended"

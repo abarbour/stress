@@ -1,0 +1,79 @@
+echo " ... working in script CreateNameFile"
+
+set NameTextFontType = 0 # Helvetica
+
+echo " " > $TEMP/NameData
+echo " " > $TEMP/NameSymbol
+echo " " > $TEMP/NameSymbPenSiz
+echo " " > $TEMP/NameSymbPenCol
+echo " " > $TEMP/NameSymbFilCol
+echo " " > $TEMP/NameTextPenCol
+echo " " > $TEMP/NameTextFontSiz
+echo " " > $TEMP/NameXShift
+echo " " > $TEMP/NameYShift
+
+set loop = 0
+set num = 1
+while ($loop != $Names) 
+  eval echo -n '$Name'$num"Data"" " >> $TEMP/NameData 
+  eval echo -n '$Name'$num"Symbol " >> $TEMP/NameSymbol
+  eval echo -n '$Name'$num"SymbPenSiz " >> $TEMP/NameSymbPenSiz
+  eval echo -n '$Name'$num"SymbPenCol " >> $TEMP/NameSymbPenCol
+  eval echo -n '$Name'$num"SymbFilCol " >> $TEMP/NameSymbFilCol
+  eval echo -n '$Name'$num"TextPenCol " >> $TEMP/NameTextPenCol
+  eval echo -n '$Name'$num"TextFontSiz " >> $TEMP/NameTextFontSiz
+  eval echo -n '$Name'$num"XShift " >> $TEMP/NameXShift
+  eval echo -n '$Name'$num"YShift " >> $TEMP/NameYShift
+  echo -n " " >> $TEMP/NameData
+  echo -n " " >> $TEMP/NameSymbol
+  echo -n " " >> $TEMP/NameSymbPenSiz
+  echo -n " " >> $TEMP/NameSymbPenCol
+  echo -n " " >> $TEMP/NameSymbFilCol
+  echo -n " " >> $TEMP/NameTextPenCol
+  echo -n " " >> $TEMP/NameTextFontSiz
+  echo -n " " >> $TEMP/NameXShift
+  echo -n " " >> $TEMP/NameYShift
+  @ num++
+  @ loop++
+end
+ 
+set NameTextFontSiz = (`more $TEMP/NameTextFontSiz`)
+set NameXShift = (`more $TEMP/NameXShift`)
+set NameYShift = (`more $TEMP/NameYShift`)
+
+foreach NameData (`more $TEMP/NameData`)
+ # skip the NameData file if NameData is set to "no"
+ if ($NameData == "no") then
+    echo -n " "
+ else  
+   
+  set TempNameData = $NameData:t
+  
+  # extract the lon, lat, name and alignment lines 
+  # which are not uncommented (this file will be used for plotting the symbols
+  # and for calculating the carthesian location of the Text strings
+  awk '{if ($1 != "x") {print $1"  "$2"  "$3"  "$4}}' $NameData > $TEMP"/$TempNameData".lonlat
+
+  # project the lon lat coordinates to get plot coordinates of the Symbol in 
+  # carthesian coordinates (one line Header info)
+
+  mapproject $TEMP"/$TempNameData".lonlat -H1 $GMTRange $GMTProjection > $TEMP"/$TempNameData".proj
+
+  # add the information needed to plot the names with pstext.
+  #
+
+  awk -f $SCRIPTS/names.awk -v offsetX=$NameXShift[1] offsetY=$NameYShift[1] fontsize=$NameTextFontSiz[1] fonttype=$NameTextFontType $TEMP"/$TempNameData".proj >  $TEMP"/$TempNameData".readyforgmt
+ endif
+ 
+  shift NameXShift
+  shift NameYShift
+  shift NameTextFontSiz
+
+end
+
+unset NameXShift
+unset NameYShift
+unset NameTextFontSiz
+
+echo " ... ended"
+

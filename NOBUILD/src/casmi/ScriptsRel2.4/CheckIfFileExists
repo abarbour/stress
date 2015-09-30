@@ -1,0 +1,26 @@
+#!/bin/csh
+set Continue = true
+
+foreach file ( $argv )
+  if ( !(-e $file) ) then 
+   echo "ERROR: file $file doesn't exist."
+   echo " check path and filename and rerun the script"
+   echo " "
+   set Continue = false
+   break
+  endif
+  if ( !(-r $file) ) then 
+   echo "ERROR: file $file exist, but you have no readpermission."
+   echo " ask owner of the file for read permission and rerun the script"
+   echo " "
+   set Continue = false
+  endif
+end 
+
+if ($Continue == "false" ) then
+ exit (1)
+else
+ exit (0)
+endif  
+ 
+   

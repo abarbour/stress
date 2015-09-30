@@ -1,0 +1,41 @@
+echo " ... working in script PrepareGridmapStressData"
+
+# FIRST PART: setting the default values for Smoothed Stress data 
+# setting the default values, these values should be the same as for the 
+# normal stress data. As we plot two vectors, we have to devide the nubers by 2.
+# this is done at the end of this script.
+
+  # Length of symbols 
+  if ($SmGridDataLen == "default" || $SmGridDataLen == "middle") then
+      set SmGridDataLen = 0.45
+  else if ($SmGridDataLen == "tiny") then
+      set SmGridDataLen = 0.30
+  else if ($SmGridDataLen == "small") then
+      set SmGridDataLen = 0.35
+  else if ($SmGridDataLen == "large") then
+      set SmGridDataLen = 0.55
+  endif
+ 
+  set SmGridDataLen = `awk -v x=$SmGridDataLen 'BEGIN{val=(x)/2; print val}'`
+  
+  # find out if color of lines is determined by commandoption -W (SmGridCPT > 0) 
+  # or by commandoption -C (SmGridCPT == 0)
+  set SmGridCPT = `awk -v x=$SmGridDataCol 'BEGIN{val=index(x,"W"); print val}'`
+
+  # if commandoption -W is used, set fill color for arrows
+  if ($SmGridCPT > 0) then
+    set SmGridDataPen = " "
+    set SmGridDataFil = `awk -v x=$SmGridDataCol 'BEGIN{val=index(x,"/"); print "-G"substr(x,val+1)}'`
+  else 
+    # set fill color to empty string and the pen attributes to a line with 
+    # short dashes and long gaps
+    set SmGridDataPen = "-W1/0/0/0t1_10000:9000"
+    set SmGridDataFil = " "
+  endif
+    
+# SECOND PART: call preparegrdm.awk to add 4th colunm giving the length for
+# plotting with gmt.
+
+  awk -f $SCRIPTS/preparegrdm.awk -v lengt=$SmGridDataLen -v cpt=$SmGridCPT $SmGridData > $TEMP/SmGridData.gmt
+
+echo " ... ended"

@@ -1,0 +1,27 @@
+echo " ... working in script CreatePointList"
+
+echo " " > $TEMP/PointData
+echo " " > $TEMP/PointSymbol
+echo " " > $TEMP/PointSymbPenSiz
+echo " " > $TEMP/PointSymbPenCol
+echo " " > $TEMP/PointSymbFilCol
+
+set loop = 0
+set num = 1
+while ($loop != $Points) 
+  eval echo -n '$Point'$num"Data"" " >> $TEMP/PointData 
+  eval echo -n '$Point'$num"Symbol " >> $TEMP/PointSymbol
+  eval echo -n '$Point'$num"SymbPenSiz " >> $TEMP/PointSymbPenSiz
+  eval echo -n '$Point'$num"SymbPenCol " >> $TEMP/PointSymbPenCol
+  eval echo -n '$Point'$num"SymbFilCol " >> $TEMP/PointSymbFilCol
+  echo -n " " >> $TEMP/PointData
+  echo -n " " >> $TEMP/PointSymbol
+  echo -n " " >> $TEMP/PointSymbPenSiz
+  echo -n " " >> $TEMP/PointSymbPenCol
+  echo -n " " >> $TEMP/PointSymbFilCol
+  @ num++
+  @ loop++
+end
+ 
+echo " ... ended"
+

@@ -1,0 +1,74 @@
+#!/bin/csh
+#########################################################
+#
+# configuration script for casmi and friends
+# sets perl shebang to appropiate place
+#
+#########################################################
+
+
+echo "*************************************************************************"
+echo "**"
+echo "**        CASMI depends on the following software packages:"
+echo "**        *************************************************"
+echo "**"
+echo "**        + Gmake   (the GNU make utility)"
+echo "**        + Perl    (version 5.6.1 or higher)"
+echo "**        + Perl/Tk (the perl module Tk.pm; version 800.023 or higher)"
+echo "**        + Csh     (the C-shell)"
+echo "**        + Gawk    (the GNU Project's implementation of AWK)"
+echo "**        + GMT     (the Generic Mapping Tools; version 3.4.1 or higher)"
+echo "**        + ImageMagick"
+echo "**        + Ghostscript"
+echo "**"
+echo "**        With software versions older than suggested problems may occur."
+echo "**        For displaying the Help and Info PDF files, acroread is needed."
+echo "**"
+echo "*************************************************************************"
+echo
+# checks for perl
+echo -n "Is the perl executable in the Normal place (/usr/bin/perl)? (y/n) [y]: "
+set answer = $<
+if ($answer == "n" || $answer == "N") then
+    echo "Then we have to change it in the sources"
+    echo -n "Where is perl then (maybe in `which perl`)? [`which perl`]: "
+    set answer = $<
+    if ($answer == "" || $answer == "y") then
+	set answer = `which perl`;
+    endif
+    set string = "+/usr/bin/perl+$answer+g"
+    perl -i -p -e s$string casmi.pl Process.pm
+    echo "Changed it in casmi.pl"
+else
+    echo "Leaving /usr/bin/perl as it is"
+endif
+
+# checks for csh
+echo -n "Is csh in the normal place (/bin/csh)? (y/n) [y]: "
+set answer = $<
+if ($answer == "n" || $answer == "N") then
+    echo "Then we have to change it in the sources"
+    echo -n "Where is csh (maybe in `which csh`)? [`which csh`]: "
+    set answer = $<
+    if ($answer == "" || $answer == "y") then
+	set answer = `which csh`;
+    endif
+    set string = "+/bin/csh+$answer+g"
+    set prefix = "ScriptsRel2.4"
+    set csh_files = "ms24.gmt $prefix/PrepareStressData $prefix/CheckIfFileExists $prefix/CreateGmtScriptNew"
+    perl -i -p -e s$string $csh_files
+    echo "Changed it in $csh_files"
+else 
+    echo "Leaving /bin/csh as the default shell"
+endif
+
+# making the files executable
+echo "making the files executable"
+chmod a+x casmi.pl casmi ScriptsRel2.4/*
+chmod a+x *.pl
+
+echo "All done!"
+echo
+echo "Use CASMI by typing <path_to_CASMI_directory>/casmi"
+echo "(or include <path_to_CASMI_directory> in your PATH environment variable)."
+

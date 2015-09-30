@@ -1,0 +1,102 @@
+echo " ... working in script DefineStress1Data"
+
+##set the variables used for the script CalculateStressData
+
+set TEMP_S = $TEMP1
+
+set PBE_filter_flag = 'active'
+
+set StressData = $Stress1Data
+
+set STypeFMS = $S1TypeFMS
+set STypeFMA = $S1TypeFMA
+set STypeFMF = $S1TypeFMF
+set STypeOC  = $S1TypeOC
+set STypeHF  = $S1TypeHF
+set STypeBO  = $S1TypeBO  
+set STypeGI  = $S1TypeGI 
+set STypeDIF = $S1TypeDIF
+set STypeBS  = $S1TypeBS
+
+set SQualA = $S1QualA
+set SQualB = $S1QualB
+set SQualC = $S1QualC
+set SQualD = $S1QualD
+set SQualE = $S1QualE
+
+set SDepthTop = $S1DepthTop
+set SDepthBot = $S1DepthBot
+
+set SRegimeTF = $S1_Regime_TF
+set SRegimeTS = $S1_Regime_TS
+set SRegimeSS = $S1_Regime_SS
+set SRegimeNS = $S1_Regime_NS
+set SRegimeNF = $S1_Regime_NF
+set SRegimeU  = $S1_Regime_U 
+
+set S_CTF_ex_all       = $S1_CTF_exclude_all
+set S_CTF_ex_all_dist  = $S1_CTF_exclude_all_distance
+set S_CTF_ex_SS        = $S1_CTF_exclude_SS
+set S_CTF_ex_SS_dist   = $S1_CTF_exclude_SS_distance
+set S_CTF_ex_PBE       = $S1_CTF_exclude_PBE_events
+set S_CRB_ex_all       = $S1_CRB_exclude_all
+set S_CRB_ex_all_dist  = $S1_CRB_exclude_all_distance
+set S_CRB_ex_NF        = $S1_CRB_exclude_NF
+set S_CRB_ex_NF_dist   = $S1_CRB_exclude_NF_distance
+set S_CRB_ex_PBE       = $S1_CRB_exclude_PBE_events
+set S_CCB_ex_all       = $S1_CCB_exclude_all
+set S_CCB_ex_all_dist  = $S1_CCB_exclude_all_distance
+set S_CCB_ex_TF        = $S1_CCB_exclude_TF
+set S_CCB_ex_TF_dist   = $S1_CCB_exclude_TF_distance
+set S_CCB_ex_PBE       = $S1_CCB_exclude_PBE_events
+set S_OTF_ex_all       = $S1_OTF_exclude_all
+set S_OTF_ex_all_dist  = $S1_OTF_exclude_all_distance
+set S_OTF_ex_SS        = $S1_OTF_exclude_SS
+set S_OTF_ex_SS_dist   = $S1_OTF_exclude_SS_distance
+set S_OTF_ex_PBE       = $S1_OTF_exclude_PBE_events
+set S_OSR_ex_all       = $S1_OSR_exclude_all
+set S_OSR_ex_all_dist  = $S1_OSR_exclude_all_distance
+set S_OSR_ex_NF        = $S1_OSR_exclude_NF
+set S_OSR_ex_NF_dist   = $S1_OSR_exclude_NF_distance
+set S_OSR_ex_PBE       = $S1_OSR_exclude_PBE_events
+set S_OCB_ex_all       = $S1_OCB_exclude_all
+set S_OCB_ex_all_dist  = $S1_OCB_exclude_all_distance
+set S_OCB_ex_TF        = $S1_OCB_exclude_TF
+set S_OCB_ex_TF_dist   = $S1_OCB_exclude_TF_distance
+set S_OCB_ex_PBE       = $S1_OCB_exclude_PBE_events
+set S_SUB_ex_all       = $S1_SUB_exclude_all
+set S_SUB_ex_all_dist  = $S1_SUB_exclude_all_distance
+set S_SUB_ex_TF        = $S1_SUB_exclude_TF
+set S_SUB_ex_TF_dist   = $S1_SUB_exclude_TF_distance
+set S_SUB_ex_PBE       = $S1_SUB_exclude_PBE_events
+
+set SDataQASize =  $S1DataQASize
+set SDataQBSize =  $S1DataQBSize
+set SDataQCSize =  $S1DataQCSize 
+set SDataQDSize =  $S1DataQDSize
+set SDataQESize =  $S1DataQESize
+
+set SDataQALen = $S1DataQALen
+set SDataQBLen = $S1DataQBLen
+set SDataQCLen = $S1DataQCLen 
+set SDataQDLen = $S1DataQDLen
+set SDataQELen = $S1DataQELen
+
+set SQualAT = $S1QualAT
+set SQualBT = $S1QualBT
+set SQualCT = $S1QualCT
+set SQualDT = $S1QualDT
+set SQualET = $S1QualET
+
+set SDataTFColor = $S1DataTFColor
+set SDataSSColor = $S1DataSSColor      
+set SDataNFColor = $S1DataNFColor
+set SDataUColor = $S1DataUColor
+
+set StressSC = $Stress1SC
+if ($Stress1SC == "y") then
+   set StressSCCol = $Stress1SCCol
+   set StressSCFontSiz = $Stress1SCFontSiz
+endif   
+
+echo " ... ended"

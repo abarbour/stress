@@ -1,0 +1,34 @@
+echo " ... working in script PrepareTrajStressData"
+
+# check if trajectories have to be plotted in different colors
+
+set trajcpt = `awk -v colopt=$SmTrajDataCol 'BEGIN{start = match(colopt,"-C"); if(start > 0) {print substr(colopt,3)} else { print 0}}'`
+
+if ($trajcpt != 0) then
+  # we have to split the trajectories file according to the cpt file
+   
+   awk '/[0-9]/' $trajcpt > $TEMP/traj.cpt
+   
+   set trajlines = `awk 'END{print NR}' $TEMP/traj.cpt`
+
+   set line = 1
+   
+   while ($line <= $trajlines)
+   
+      set min = `awk -v line=$line '{if (NR==line) {print $1}}' $TEMP/traj.cpt`
+      set max = `awk -v line=$line '{if (NR==line) {print $5}}' $TEMP/traj.cpt`
+      
+      awk -f $SCRIPTS/splittraj.awk -v mini=$min -v maxi=$max $SmTrajData > $TEMP/TrajDat$line.gmt
+      
+      # these files can contain two lines following each other beginning both with > 
+      # these lines confuse GMT, we eliminate them
+      
+      awk 'BEGIN{ss=0}{if ($1 == ">" && ss==0){print;ss=1} else if ($1 == ">" && ss==1) {} else {print; ss=0}}' $TEMP/TrajDat$line.gmt > $TEMP/TrajData$line.gmt
+      
+      @ line++
+   end
+endif 
+  
+echo " ... ended"
+
+

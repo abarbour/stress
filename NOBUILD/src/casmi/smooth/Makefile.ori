@@ -1,0 +1,41 @@
+SHELL=/bin/sh
+
+smooth: smooth.o smoothfu.o sortfunc.o hmsmooth.o smoothwr.o smpred.o traject.o renumber.o
+	g++ -traditional -o smooth smooth.o smoothfu.o sortfunc.o hmsmooth.o smoothwr.o smpred.o traject.o renumber.o -lm
+
+smpred.o: smooth.h smpred.c
+	g++ -traditional  -c smpred.c -g 
+	
+traject.o: smooth.h traject.c
+	g++ -traditional  -c traject.c -g 
+	
+hmsmooth.o: smooth.h hmsmooth.c
+	g++ -traditional  -c hmsmooth.c -g 
+
+smoothwr.o: smooth.h smoothwr.c
+	g++ -traditional  -c smoothwr.c -g 
+
+smooth.o: smooth.h smooth.c
+	g++ -traditional  -c smooth.c -g 
+
+smoothfu.o: smooth.h smoothfu.c 
+	g++ -traditional  -c smoothfu.c -g 
+
+sortfunc.o: smooth.h sortfunc.c
+	g++ -traditional  -c sortfunc.c -g 
+
+renumber.o: smooth.h renumber.c
+	g++ -traditional  -c renumber.c -g 
+
+
+install: smooth
+	mv smooth /wb2disk/vwehrle/programs
+	
+	
+clean:
+	rm -f smooth.o smoothfu.o sortfunc.o hmsmooth.o smoothwr.o smpred.o traject.o renumber.o
+
+
+print:  
+	a2ps -c smooth.h smooth.c smoothfu.c sortfunc.c hmsmooth.c smoothwr.c smpred.c traject.c renumber.c > smooth.ps
+

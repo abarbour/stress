@@ -1,0 +1,421 @@
+echo " ... working in script CalculateStressData"
+
+# this script can be run for Stress1Data and Stress2Data, the Variables have
+# to be set with the script DefineStress1(2)Data.
+# the output will be written in Directory TEMP1 or TEMP2
+
+  # create string containing the poligon files used for each regime and quality
+  # up to now all indicators except the overcoreing are plotted as poligones
+  # this list of files will be used in CreateGmtScript
+  
+  echo -n " " > $TEMP_S/QualA_NF_poligons 
+  echo -n " " > $TEMP_S/QualA_SS_poligons
+  echo -n " " > $TEMP_S/QualA_SS_semi_poli
+  echo -n " " > $TEMP_S/QualA_TF_poligons
+  echo -n " " > $TEMP_S/QualA_U_poligons 
+  echo -n " " > $TEMP_S/QualB_NF_poligons
+  echo -n " " > $TEMP_S/QualB_SS_poligons
+  echo -n " " > $TEMP_S/QualB_SS_semi_poli
+  echo -n " " > $TEMP_S/QualB_TF_poligons
+  echo -n " " > $TEMP_S/QualB_U_poligons 
+  echo -n " " > $TEMP_S/QualC_NF_poligons
+  echo -n " " > $TEMP_S/QualC_SS_poligons
+  echo -n " " > $TEMP_S/QualC_SS_semi_poli
+  echo -n " " > $TEMP_S/QualC_TF_poligons
+  echo -n " " > $TEMP_S/QualC_U_poligons 
+  echo -n " " > $TEMP_S/QualD_NF_poligons
+  echo -n " " > $TEMP_S/QualD_SS_poligons
+  echo -n " " > $TEMP_S/QualD_SS_semi_poli
+  echo -n " " > $TEMP_S/QualD_TF_poligons
+  echo -n " " > $TEMP_S/QualD_U_poligons
+  echo -n " " > $TEMP_S/QualE_NF_poligons
+  echo -n " " > $TEMP_S/QualE_SS_poligons
+  echo -n " " > $TEMP_S/QualE_SS_semi_poli
+  echo -n " " > $TEMP_S/QualE_TF_poligons
+  echo -n " " > $TEMP_S/QualE_U_poligons
+
+
+  if ($STypeGI == "y") then
+     echo -n $TEMP_S/'box_A_NF ' >> $TEMP_S/QualA_NF_poligons
+     echo -n $TEMP_S/'box_A_SS ' >> $TEMP_S/QualA_SS_poligons 
+     echo -n $TEMP_S/'semibox_A_SS ' >> $TEMP_S/QualA_SS_semi_poli 
+     echo -n $TEMP_S/'box_A_TF ' >> $TEMP_S/QualA_TF_poligons 
+     echo -n $TEMP_S/'box_A_U '  >> $TEMP_S/QualA_U_poligons 
+     echo -n $TEMP_S/'box_B_NF ' >> $TEMP_S/QualB_NF_poligons 
+     echo -n $TEMP_S/'box_B_SS ' >> $TEMP_S/QualB_SS_poligons 
+     echo -n $TEMP_S/'semibox_B_SS ' >> $TEMP_S/QualB_SS_semi_poli 
+     echo -n $TEMP_S/'box_B_TF ' >> $TEMP_S/QualB_TF_poligons 
+     echo -n $TEMP_S/'box_B_U '  >> $TEMP_S/QualB_U_poligons  
+     echo -n $TEMP_S/'box_C_NF ' >> $TEMP_S/QualC_NF_poligons
+     echo -n $TEMP_S/'box_C_SS ' >> $TEMP_S/QualC_SS_poligons 
+     echo -n $TEMP_S/'semibox_C_SS ' >> $TEMP_S/QualC_SS_semi_poli 
+     echo -n $TEMP_S/'box_C_TF ' >> $TEMP_S/QualC_TF_poligons 
+     echo -n $TEMP_S/'box_C_U  ' >> $TEMP_S/QualC_U_poligons  
+     echo -n $TEMP_S/'box_D_NF ' >> $TEMP_S/QualD_NF_poligons 
+     echo -n $TEMP_S/'box_D_SS ' >> $TEMP_S/QualD_SS_poligons 
+     echo -n $TEMP_S/'semibox_D_SS ' >> $TEMP_S/QualD_SS_semi_poli 
+     echo -n $TEMP_S/'box_D_TF ' >> $TEMP_S/QualD_TF_poligons 
+     echo -n $TEMP_S/'box_D_U '  >> $TEMP_S/QualD_U_poligons  
+     echo -n $TEMP_S/'box_E_NF ' >> $TEMP_S/QualE_NF_poligons 
+     echo -n $TEMP_S/'box_E_SS ' >> $TEMP_S/QualE_SS_poligons 
+     echo -n $TEMP_S/'semibox_E_SS ' >> $TEMP_S/QualE_SS_semi_poli 
+     echo -n $TEMP_S/'box_E_TF ' >> $TEMP_S/QualE_TF_poligons 
+     echo -n $TEMP_S/'box_E_U '  >> $TEMP_S/QualE_U_poligons  
+  endif
+
+  if ($STypeHF == "y") then
+     echo -n $TEMP_S/'star_A_NF ' >> $TEMP_S/QualA_NF_poligons
+     echo -n $TEMP_S/'star_A_SS ' >> $TEMP_S/QualA_SS_poligons 
+     echo -n $TEMP_S/'semistar_A_SS ' >> $TEMP_S/QualA_SS_semi_poli 
+     echo -n $TEMP_S/'star_A_TF ' >> $TEMP_S/QualA_TF_poligons 
+     echo -n $TEMP_S/'star_A_U '  >> $TEMP_S/QualA_U_poligons 
+     echo -n $TEMP_S/'star_B_NF ' >> $TEMP_S/QualB_NF_poligons 
+     echo -n $TEMP_S/'star_B_SS ' >> $TEMP_S/QualB_SS_poligons 
+     echo -n $TEMP_S/'semistar_B_SS ' >> $TEMP_S/QualB_SS_semi_poli 
+     echo -n $TEMP_S/'star_B_TF ' >> $TEMP_S/QualB_TF_poligons 
+     echo -n $TEMP_S/'star_B_U '  >> $TEMP_S/QualB_U_poligons  
+     echo -n $TEMP_S/'star_C_NF ' >> $TEMP_S/QualC_NF_poligons
+     echo -n $TEMP_S/'star_C_SS ' >> $TEMP_S/QualC_SS_poligons 
+     echo -n $TEMP_S/'semistar_C_SS ' >> $TEMP_S/QualC_SS_semi_poli 
+     echo -n $TEMP_S/'star_C_TF ' >> $TEMP_S/QualC_TF_poligons 
+     echo -n $TEMP_S/'star_C_U  ' >> $TEMP_S/QualC_U_poligons  
+     echo -n $TEMP_S/'star_D_NF ' >> $TEMP_S/QualD_NF_poligons 
+     echo -n $TEMP_S/'star_D_SS ' >> $TEMP_S/QualD_SS_poligons 
+     echo -n $TEMP_S/'semistar_D_SS ' >> $TEMP_S/QualD_SS_semi_poli 
+     echo -n $TEMP_S/'star_D_TF ' >> $TEMP_S/QualD_TF_poligons 
+     echo -n $TEMP_S/'star_D_U '  >> $TEMP_S/QualD_U_poligons  
+     echo -n $TEMP_S/'star_E_NF ' >> $TEMP_S/QualE_NF_poligons 
+     echo -n $TEMP_S/'star_E_SS ' >> $TEMP_S/QualE_SS_poligons 
+     echo -n $TEMP_S/'semistar_E_SS ' >> $TEMP_S/QualE_SS_semi_poli 
+     echo -n $TEMP_S/'star_E_TF ' >> $TEMP_S/QualE_TF_poligons 
+     echo -n $TEMP_S/'star_E_U '  >> $TEMP_S/QualE_U_poligons  
+  endif
+
+  if ($STypeBO == "y") then
+     echo -n $TEMP_S/'arrow_A_NF ' >> $TEMP_S/QualA_NF_poligons
+     echo -n $TEMP_S/'arrow_A_SS ' >> $TEMP_S/QualA_SS_poligons 
+     echo -n $TEMP_S/'semiarrow_A_SS ' >> $TEMP_S/QualA_SS_semi_poli 
+     echo -n $TEMP_S/'arrow_A_TF ' >> $TEMP_S/QualA_TF_poligons 
+     echo -n $TEMP_S/'arrow_A_U '  >> $TEMP_S/QualA_U_poligons 
+     echo -n $TEMP_S/'arrow_B_NF ' >> $TEMP_S/QualB_NF_poligons 
+     echo -n $TEMP_S/'arrow_B_SS ' >> $TEMP_S/QualB_SS_poligons 
+     echo -n $TEMP_S/'semiarrow_B_SS ' >> $TEMP_S/QualB_SS_semi_poli 
+     echo -n $TEMP_S/'arrow_B_TF ' >> $TEMP_S/QualB_TF_poligons 
+     echo -n $TEMP_S/'arrow_B_U '  >> $TEMP_S/QualB_U_poligons  
+     echo -n $TEMP_S/'arrow_C_NF ' >> $TEMP_S/QualC_NF_poligons
+     echo -n $TEMP_S/'arrow_C_SS ' >> $TEMP_S/QualC_SS_poligons 
+     echo -n $TEMP_S/'semiarrow_C_SS ' >> $TEMP_S/QualC_SS_semi_poli 
+     echo -n $TEMP_S/'arrow_C_TF ' >> $TEMP_S/QualC_TF_poligons 
+     echo -n $TEMP_S/'arrow_C_U  ' >> $TEMP_S/QualC_U_poligons  
+     echo -n $TEMP_S/'arrow_D_NF ' >> $TEMP_S/QualD_NF_poligons 
+     echo -n $TEMP_S/'arrow_D_SS ' >> $TEMP_S/QualD_SS_poligons 
+     echo -n $TEMP_S/'semiarrow_D_SS ' >> $TEMP_S/QualD_SS_semi_poli 
+     echo -n $TEMP_S/'arrow_D_TF ' >> $TEMP_S/QualD_TF_poligons 
+     echo -n $TEMP_S/'arrow_D_U '  >> $TEMP_S/QualD_U_poligons  
+     echo -n $TEMP_S/'arrow_E_NF ' >> $TEMP_S/QualE_NF_poligons 
+     echo -n $TEMP_S/'arrow_E_SS ' >> $TEMP_S/QualE_SS_poligons 
+     echo -n $TEMP_S/'semiarrow_E_SS ' >> $TEMP_S/QualE_SS_semi_poli 
+     echo -n $TEMP_S/'arrow_E_TF ' >> $TEMP_S/QualE_TF_poligons 
+     echo -n $TEMP_S/'arrow_E_U '  >> $TEMP_S/QualE_U_poligons  
+  endif
+
+  if ($STypeFMS == "y"||$STypeFMA == "y"||$STypeFMF == "y") then
+     echo -n $TEMP_S/'circle_A_NF ' >> $TEMP_S/QualA_NF_poligons
+     echo -n $TEMP_S/'circle_A_SS ' >> $TEMP_S/QualA_SS_poligons 
+     echo -n $TEMP_S/'semicircle_A_SS ' >> $TEMP_S/QualA_SS_semi_poli 
+     echo -n $TEMP_S/'circle_A_TF ' >> $TEMP_S/QualA_TF_poligons 
+     echo -n $TEMP_S/'circle_A_U '  >> $TEMP_S/QualA_U_poligons 
+     echo -n $TEMP_S/'circle_B_NF ' >> $TEMP_S/QualB_NF_poligons 
+     echo -n $TEMP_S/'circle_B_SS ' >> $TEMP_S/QualB_SS_poligons 
+     echo -n $TEMP_S/'semicircle_B_SS ' >> $TEMP_S/QualB_SS_semi_poli 
+     echo -n $TEMP_S/'circle_B_TF ' >> $TEMP_S/QualB_TF_poligons 
+     echo -n $TEMP_S/'circle_B_U '  >> $TEMP_S/QualB_U_poligons  
+     echo -n $TEMP_S/'circle_C_NF ' >> $TEMP_S/QualC_NF_poligons
+     echo -n $TEMP_S/'circle_C_SS ' >> $TEMP_S/QualC_SS_poligons 
+     echo -n $TEMP_S/'semicircle_C_SS ' >> $TEMP_S/QualC_SS_semi_poli 
+     echo -n $TEMP_S/'circle_C_TF ' >> $TEMP_S/QualC_TF_poligons 
+     echo -n $TEMP_S/'circle_C_U  ' >> $TEMP_S/QualC_U_poligons  
+     echo -n $TEMP_S/'circle_D_NF ' >> $TEMP_S/QualD_NF_poligons 
+     echo -n $TEMP_S/'circle_D_SS ' >> $TEMP_S/QualD_SS_poligons 
+     echo -n $TEMP_S/'semicircle_D_SS ' >> $TEMP_S/QualD_SS_semi_poli 
+     echo -n $TEMP_S/'circle_D_TF ' >> $TEMP_S/QualD_TF_poligons 
+     echo -n $TEMP_S/'circle_D_U '  >> $TEMP_S/QualD_U_poligons  
+     echo -n $TEMP_S/'circle_E_NF ' >> $TEMP_S/QualE_NF_poligons 
+     echo -n $TEMP_S/'circle_E_SS ' >> $TEMP_S/QualE_SS_poligons 
+     echo -n $TEMP_S/'semicircle_E_SS ' >> $TEMP_S/QualE_SS_semi_poli 
+     echo -n $TEMP_S/'circle_E_TF ' >> $TEMP_S/QualE_TF_poligons 
+     echo -n $TEMP_S/'circle_E_U '  >> $TEMP_S/QualE_U_poligons  
+  endif
+
+  if ($STypeDIF == "y") then
+     echo -n $TEMP_S/'dif_A_NF ' >> $TEMP_S/QualA_NF_poligons
+     echo -n $TEMP_S/'dif_A_SS ' >> $TEMP_S/QualA_SS_poligons 
+     echo -n $TEMP_S/'semidif_A_SS ' >> $TEMP_S/QualA_SS_semi_poli 
+     echo -n $TEMP_S/'dif_A_TF ' >> $TEMP_S/QualA_TF_poligons 
+     echo -n $TEMP_S/'dif_A_U '  >> $TEMP_S/QualA_U_poligons 
+     echo -n $TEMP_S/'dif_B_NF ' >> $TEMP_S/QualB_NF_poligons 
+     echo -n $TEMP_S/'dif_B_SS ' >> $TEMP_S/QualB_SS_poligons 
+     echo -n $TEMP_S/'semidif_B_SS ' >> $TEMP_S/QualB_SS_semi_poli 
+     echo -n $TEMP_S/'dif_B_TF ' >> $TEMP_S/QualB_TF_poligons 
+     echo -n $TEMP_S/'dif_B_U '  >> $TEMP_S/QualB_U_poligons  
+     echo -n $TEMP_S/'dif_C_NF ' >> $TEMP_S/QualC_NF_poligons
+     echo -n $TEMP_S/'dif_C_SS ' >> $TEMP_S/QualC_SS_poligons 
+     echo -n $TEMP_S/'semidif_C_SS ' >> $TEMP_S/QualC_SS_semi_poli 
+     echo -n $TEMP_S/'dif_C_TF ' >> $TEMP_S/QualC_TF_poligons 
+     echo -n $TEMP_S/'dif_C_U  ' >> $TEMP_S/QualC_U_poligons  
+     echo -n $TEMP_S/'dif_D_NF ' >> $TEMP_S/QualD_NF_poligons 
+     echo -n $TEMP_S/'dif_D_SS ' >> $TEMP_S/QualD_SS_poligons 
+     echo -n $TEMP_S/'semidif_D_SS ' >> $TEMP_S/QualD_SS_semi_poli 
+     echo -n $TEMP_S/'dif_D_TF ' >> $TEMP_S/QualD_TF_poligons 
+     echo -n $TEMP_S/'dif_D_U '  >> $TEMP_S/QualD_U_poligons  
+     echo -n $TEMP_S/'dif_E_NF ' >> $TEMP_S/QualE_NF_poligons 
+     echo -n $TEMP_S/'dif_E_SS ' >> $TEMP_S/QualE_SS_poligons 
+     echo -n $TEMP_S/'semidif_E_SS ' >> $TEMP_S/QualE_SS_semi_poli 
+     echo -n $TEMP_S/'dif_E_TF ' >> $TEMP_S/QualE_TF_poligons 
+     echo -n $TEMP_S/'dif_E_U '  >> $TEMP_S/QualE_U_poligons  
+  endif
+
+  if ($STypeBS == "y") then
+     echo -n $TEMP_S/'bs_A_NF ' >> $TEMP_S/QualA_NF_poligons
+     echo -n $TEMP_S/'bs_A_SS ' >> $TEMP_S/QualA_SS_poligons 
+#     echo -n $TEMP_S/'semibs_A_SS ' >> $TEMP_S/QualA_SS_semi_poli 
+     echo -n $TEMP_S/'bs_A_TF ' >> $TEMP_S/QualA_TF_poligons 
+     echo -n $TEMP_S/'bs_A_U '  >> $TEMP_S/QualA_U_poligons 
+     echo -n $TEMP_S/'bs_B_NF ' >> $TEMP_S/QualB_NF_poligons 
+     echo -n $TEMP_S/'bs_B_SS ' >> $TEMP_S/QualB_SS_poligons 
+#     echo -n $TEMP_S/'semibs_B_SS ' >> $TEMP_S/QualB_SS_semi_poli 
+     echo -n $TEMP_S/'bs_B_TF ' >> $TEMP_S/QualB_TF_poligons 
+     echo -n $TEMP_S/'bs_B_U '  >> $TEMP_S/QualB_U_poligons  
+     echo -n $TEMP_S/'bs_C_NF ' >> $TEMP_S/QualC_NF_poligons
+     echo -n $TEMP_S/'bs_C_SS ' >> $TEMP_S/QualC_SS_poligons 
+#     echo -n $TEMP_S/'semibs_C_SS ' >> $TEMP_S/QualC_SS_semi_poli 
+     echo -n $TEMP_S/'bs_C_TF ' >> $TEMP_S/QualC_TF_poligons 
+     echo -n $TEMP_S/'bs_C_U  ' >> $TEMP_S/QualC_U_poligons  
+     echo -n $TEMP_S/'bs_D_NF ' >> $TEMP_S/QualD_NF_poligons 
+     echo -n $TEMP_S/'bs_D_SS ' >> $TEMP_S/QualD_SS_poligons 
+#     echo -n $TEMP_S/'semibs_D_SS ' >> $TEMP_S/QualD_SS_semi_poli 
+     echo -n $TEMP_S/'bs_D_TF ' >> $TEMP_S/QualD_TF_poligons 
+     echo -n $TEMP_S/'bs_D_U '  >> $TEMP_S/QualD_U_poligons  
+     echo -n $TEMP_S/'bs_E_NF ' >> $TEMP_S/QualE_NF_poligons 
+     echo -n $TEMP_S/'bs_E_SS ' >> $TEMP_S/QualE_SS_poligons 
+#     echo -n $TEMP_S/'semibs_E_SS ' >> $TEMP_S/QualE_SS_semi_poli 
+     echo -n $TEMP_S/'bs_E_TF ' >> $TEMP_S/QualE_TF_poligons 
+     echo -n $TEMP_S/'bs_E_U '  >> $TEMP_S/QualE_U_poligons  
+  endif
+
+  set QualA_NF_poligons = ` more $TEMP_S/QualA_NF_poligons`
+  set QualA_SS_poligons = ` more $TEMP_S/QualA_SS_poligons`
+  set QualA_SS_semi_poli = ` more $TEMP_S/QualA_SS_semi_poli`
+  set QualA_TF_poligons = ` more $TEMP_S/QualA_TF_poligons`
+  set QualA_U_poligons  = ` more $TEMP_S/QualA_U_poligons`
+  set QualB_NF_poligons = ` more $TEMP_S/QualB_NF_poligons`
+  set QualB_SS_poligons = ` more $TEMP_S/QualB_SS_poligons`
+  set QualB_SS_semi_poli = ` more $TEMP_S/QualB_SS_semi_poli`
+  set QualB_TF_poligons = ` more $TEMP_S/QualB_TF_poligons`
+  set QualB_U_poligons  = ` more $TEMP_S/QualB_U_poligons`
+  set QualC_NF_poligons = ` more $TEMP_S/QualC_NF_poligons`
+  set QualC_SS_poligons = ` more $TEMP_S/QualC_SS_poligons`
+  set QualC_SS_semi_poli = ` more $TEMP_S/QualC_SS_semi_poli`
+  set QualC_TF_poligons = ` more $TEMP_S/QualC_TF_poligons`
+  set QualC_U_poligons  = ` more $TEMP_S/QualC_U_poligons`
+  set QualD_NF_poligons = ` more $TEMP_S/QualD_NF_poligons`
+  set QualD_SS_poligons = ` more $TEMP_S/QualD_SS_poligons`
+  set QualD_SS_semi_poli = ` more $TEMP_S/QualD_SS_semi_poli`
+  set QualD_TF_poligons = ` more $TEMP_S/QualD_TF_poligons`
+  set QualD_U_poligons  = ` more $TEMP_S/QualD_U_poligons`
+  set QualE_NF_poligons = ` more $TEMP_S/QualE_NF_poligons`
+  set QualE_SS_poligons = ` more $TEMP_S/QualE_SS_poligons`
+  set QualE_SS_semi_poli = ` more $TEMP_S/QualE_SS_semi_poli`
+  set QualE_TF_poligons = ` more $TEMP_S/QualE_TF_poligons`
+  set QualE_U_poligons  = ` more $TEMP_S/QualE_U_poligons`
+
+
+
+# SECOND PART: check if prep file exists (if not create .prep file) 
+if ( !(-e $StressData.prep) ) then
+  echo "INFORMATION: the '.prep' file for the stress data file "
+  echo " $StressData is not available. "
+  echo " I will create it and put it in the directory "
+  echo " $StressData:h"
+  echo " ... this will take some time ..."
+  $SCRIPTS/PrepareStressData $StressData  $TEMP $SCRIPTS
+endif
+
+
+
+# THIRD PART: filter out the desired Types and qualities in the choosen region.
+
+echo " extracting choosen data types and quality in desired region "
+echo " from file "$StressData".prep"
+
+
+# For Orthographic (=whole Globe) we have to extract the data points located on the halfsphere we
+# see
+if ($ProjectionName == "Orthographic") then
+  awk -f $SCRIPTS/filterregionOrtho.awk -v temp=$TEMP -v lon_pro=$lon_pro -v lat_pro=$lat_pro $StressData".prep" > $TEMP/StressData.region
+else
+
+  awk -f $SCRIPTS/filterregion.awk -v temp=$TEMP -v lat1=$s_lat1 -v lat2=$s_lat2 -v lon1=$s_lon1 -v lon2=$s_lon2 $StressData".prep" > $TEMP/StressData.region
+
+endif
+
+cat $TEMP/info.filterregion
+
+awk -f $SCRIPTS/filtertype.awk -v temp=$TEMP -v STypeFMS=$STypeFMS -v STypeFMA=$STypeFMA -v STypeFMF=$STypeFMF -v STypeBO=$STypeBO -v STypeHF=$STypeHF -v STypeGI=$STypeGI -v STypeOC=$STypeOC -v STypeDIF=$STypeDIF -v STypeBS=$STypeBS  $TEMP/StressData.region > $TEMP/StressData.type
+cat $TEMP/info.filtertype
+
+awk -f $SCRIPTS/filterregime.awk -v temp=$TEMP -v SRegimeTF=$SRegimeTF -v SRegimeTS=$SRegimeTS -v SRegimeSS=$SRegimeSS -v SRegimeNS=$SRegimeNS -v SRegimeNF=$SRegimeNF -v SRegimeU=$SRegimeU  $TEMP/StressData.type > $TEMP/StressData.regime
+cat $TEMP/info.filterregime
+
+awk -f $SCRIPTS/filterquality.awk -v temp=$TEMP SQualA=$SQualA  SQualB=$SQualB SQualC=$SQualC  SQualD=$SQualD  SQualE=$SQualE  $TEMP/StressData.regime > $TEMP/StressData.quali
+cat $TEMP/info.filterquality
+ 
+awk -f $SCRIPTS/filterdepth.awk -v temp=$TEMP SDepthTop=$SDepthTop  SDepthBot=$SDepthBot $TEMP/StressData.quali > $TEMP/StressData.select
+cat $TEMP/info.filterdepth
+
+#########
+##echo $TEMP > ~dg/OUTTT
+# filter for PBE Events
+##if (! ($?Include_PBE_Events) ) then
+##   set Include_PBE_Events = "y"
+##endif
+
+##if ($Include_PBE_Events == "n") then
+if ($PBE_filter_flag == 'active' && $STypeFMS == "y") then
+   awk -f $SCRIPTS/filter_pbe.awk -v temp=$TEMP PBE_Filter=PBE S_CTF_ex_all=$S_CTF_ex_all S_CTF_ex_all_dist=$S_CTF_ex_all_dist S_CTF_ex_SS=$S_CTF_ex_SS S_CTF_ex_SS_dist=$S_CTF_ex_SS_dist S_CTF_ex_PBE=$S_CTF_ex_PBE S_CRB_ex_all=$S_CRB_ex_all S_CRB_ex_all_dist=$S_CRB_ex_all_dist S_CRB_ex_NF=$S_CRB_ex_NF S_CRB_ex_NF_dist=$S_CRB_ex_NF_dist S_CRB_ex_PBE=$S_CRB_ex_PBE S_CCB_ex_all=$S_CCB_ex_all S_CCB_ex_all_dist=$S_CCB_ex_all_dist S_CCB_ex_TF=$S_CCB_ex_TF S_CCB_ex_TF_dist=$S_CCB_ex_TF_dist S_CCB_ex_PBE=$S_CCB_ex_PBE S_OTF_ex_all=$S_OTF_ex_all S_OTF_ex_all_dist=$S_OTF_ex_all_dist S_OTF_ex_SS=$S_OTF_ex_SS S_OTF_ex_SS_dist=$S_OTF_ex_SS_dist S_OTF_ex_PBE=$S_OTF_ex_PBE S_OSR_ex_all=$S_OSR_ex_all S_OSR_ex_all_dist=$S_OSR_ex_all_dist S_OSR_ex_NF=$S_OSR_ex_NF S_OSR_ex_NF_dist=$S_OSR_ex_NF_dist S_OSR_ex_PBE=$S_OSR_ex_PBE S_OCB_ex_all=$S_OCB_ex_all S_OCB_ex_all_dist=$S_OCB_ex_all_dist S_OCB_ex_TF=$S_OCB_ex_TF S_OCB_ex_TF_dist=$S_OCB_ex_TF_dist S_OCB_ex_PBE=$S_OCB_ex_PBE S_SUB_ex_all=$S_SUB_ex_all S_SUB_ex_all_dist=$S_SUB_ex_all_dist S_SUB_ex_TF=$S_SUB_ex_TF S_SUB_ex_TF_dist=$S_SUB_ex_TF_dist S_SUB_ex_PBE=$S_SUB_ex_PBE $TEMP/StressData.select > $TEMP/StressData.select_pbe
+   cat $TEMP/info.filter_pbe
+   mv $TEMP/StressData.select_pbe $TEMP/StressData.select
+endif
+##endif
+
+# FOURTH PART: create cartesian coordinates of the long lat coordinates and 
+# calculate the azimuth in cartesian coordinates.
+# This has to be done every time the projection or range has changed
+# Split the lon lat of the new and old point in two files (so that they can be 
+# accessed by mapproject (new created files are $TEMP_S/LonLat.new. $TEMP_S/LonLat.old
+
+awk -f $SCRIPTS/splitnew.awk  $TEMP/StressData.select > $TEMP/LonLat.new
+awk -f $SCRIPTS/splitold.awk  $TEMP/StressData.select > $TEMP/LonLat.old
+
+# Use "mapproject" to get cartesian (=plot) coordinates of projected points
+echo " convert geographic coordinates and azimuth to x/y coordinates..."
+mapproject $TEMP/LonLat.old $GMTRange $GMTProjection > $TEMP"/LonLat.old.pro"
+mapproject $TEMP/LonLat.new $GMTRange $GMTProjection > $TEMP"/LonLat.new.pro" 
+paste $TEMP/LonLat.new.pro $TEMP/LonLat.old.pro > $TEMP"/LonLat.pro"
+
+# read in pairs of points and compute azimuth of second point relative to first 
+awk -f $SCRIPTS/azim.awk $TEMP/LonLat.pro > $TEMP"/LonLatAzi.old.pro"
+paste $TEMP/LonLatAzi.old.pro  $TEMP/LonLat.old > $TEMP"/stress.cartesian"
+
+# The file stress.cartesian contains the coordinates and azimuths 
+# in both geographic and cartesian coordinates (=plot coords. in inches).
+# Format of stress.cartesian:
+#    col. 1-3: cartesian  x, y, azi
+#    col. 4-6: geographic lon, lat, azi
+#    col. 7  : type of data
+#    col. 8  : quality
+#    col. 9  : stress regime
+#    col.10  : depth (not evaluated up to now)
+#    col.11  : site info
+
+
+# FIFTH PART:
+# create input files for gmt psxy: 
+# for every type and quality a seperate file is created. 
+
+if ($STypeFMS == "y"||$STypeFMA == "y"||$STypeFMF == "y") then 
+  # create circles and semi-circles used for focal mechanism
+  echo " create circles used for focal mechanism "
+  awk -f $SCRIPTS/circle.awk -v temp=$TEMP_S lA=$SDataQALen lB=$SDataQBLen lC=$SDataQCLen lD=$SDataQDLen lE=$SDataQELen sA=$SDataQASize sB=$SDataQBSize sC=$SDataQCSize sD=$SDataQDSize sE=$SDataQESize $TEMP/stress.cartesian
+  awk -f $SCRIPTS/semicircle.awk -v temp=$TEMP_S sA=$SDataQASize sB=$SDataQBSize sC=$SDataQCSize sD=$SDataQDSize sE=$SDataQESize $TEMP/stress.cartesian
+endif
+
+if ($STypeBO == "y") then
+  # create oposing arrows heads used for Borehole breakouts
+  echo " create opposing arrow symbol used for borehole breakouts"
+  awk -f $SCRIPTS/arrow.awk -v temp=$TEMP_S lA=$SDataQALen lB=$SDataQBLen lC=$SDataQCLen lD=$SDataQDLen lE=$SDataQELen sA=$SDataQASize  sB=$SDataQBSize sC=$SDataQCSize sD=$SDataQDSize sE=$SDataQESize $TEMP/stress.cartesian
+  awk -f $SCRIPTS/semiarrow.awk -v temp=$TEMP_S sA=$SDataQASize  sB=$SDataQBSize sC=$SDataQCSize sD=$SDataQDSize sE=$SDataQESize $TEMP/stress.cartesian
+endif
+
+if ($STypeDIF == "y") then
+  # create symbol used for Drilling Induced Fractures
+  echo " create symbol used for drilling induced fractures"
+  awk -f $SCRIPTS/dif.awk -v temp=$TEMP_S lA=$SDataQALen lB=$SDataQBLen lC=$SDataQCLen lD=$SDataQDLen lE=$SDataQELen sA=$SDataQASize  sB=$SDataQBSize sC=$SDataQCSize sD=$SDataQDSize sE=$SDataQESize $TEMP/stress.cartesian
+  awk -f $SCRIPTS/semidif.awk -v temp=$TEMP_S sA=$SDataQASize  sB=$SDataQBSize sC=$SDataQCSize sD=$SDataQDSize sE=$SDataQESize $TEMP/stress.cartesian
+endif
+
+if ($STypeBS == "y") then
+  # create symbol used for borehole slotter
+  echo " create cross bars used for borehole slotter"
+  awk -f $SCRIPTS/bs.awk -v temp=$TEMP_S lA=$SDataQALen  lB=$SDataQBLen lC=$SDataQCLen lD=$SDataQDLen lE=$SDataQELen $TEMP/stress.cartesian
+endif
+
+if ($STypeOC == "y") then
+  # create overcoring symbols 
+  echo " create cross bars used for overcoring symbols"
+  awk -f $SCRIPTS/oc.awk -v temp=$TEMP_S lA=$SDataQALen  lB=$SDataQBLen lC=$SDataQCLen lD=$SDataQDLen lE=$SDataQELen $TEMP/stress.cartesian
+endif
+
+if ($STypeHF == "y") then
+  # create hydraulic fracture symbols (star and semi-stars)
+  echo " create star and semi star used for hydraulic fracture symbols"
+  awk -f $SCRIPTS/star.awk -v temp=$TEMP_S lA=$SDataQALen lB=$SDataQBLen lC=$SDataQCLen lD=$SDataQDLen lE=$SDataQELen sA=$SDataQASize sB=$SDataQBSize sC=$SDataQCSize sD=$SDataQDSize sE=$SDataQESize $TEMP/stress.cartesian
+  awk -f $SCRIPTS/semistar.awk -v temp=$TEMP_S sA=$SDataQASize sB=$SDataQBSize sC=$SDataQCSize sD=$SDataQDSize sE=$SDataQESize $TEMP/stress.cartesian
+endif
+
+if ($STypeGI == "y") then
+  # create geological indicator symbols (box and semi-box)
+  echo " create box and semi-box used for geological indicator symbols "
+  awk -f $SCRIPTS/box.awk -v temp=$TEMP_S lA=$SDataQALen lB=$SDataQBLen lC=$SDataQCLen lD=$SDataQDLen lE=$SDataQELen sA=$SDataQASize sB=$SDataQBSize sC=$SDataQCSize sD=$SDataQDSize sE=$SDataQESize $TEMP/stress.cartesian
+  awk -f $SCRIPTS/semibox.awk -v temp=$TEMP_S  sA=$SDataQASize sB=$SDataQBSize sC=$SDataQCSize sD=$SDataQDSize sE=$SDataQESize $TEMP/stress.cartesian
+endif
+
+
+# SIXTH PART: 
+# create text file with site information
+if ($StressSC == "y") then
+  set StressSCFontType = 0
+  echo " extract site code "
+  awk -f $SCRIPTS/sitecode.awk  sA=$SDataQASize  sB=$SDataQBSize sC=$SDataQCSize sD=$SDataQDSize sE=$SDataQESize fontsize=$StressSCFontSiz fonttype=$StressSCFontType $TEMP/stress.cartesian > $TEMP_S/sitecode.gmt
+endif   
+
+# unset some vars - but CreateGmt still needs them
+# unset StressData 
+# unset STypeFMS 
+# unset STypeFMA 
+# unset STypeFMF 
+# unset STypeOC  
+# unset STypeHF  
+# unset STypeBO    
+# unset STypeGI   
+# unset STypeDIF 
+# unset STypeBS  
+# unset SQualA 
+# unset SQualB 
+# unset SQualC 
+# unset SQualD 
+# unset SQualE 
+# unset SDepthTop
+# unset SDepthBot
+# unset SDataQASize
+# unset SDataQBSize
+# unset SDataQCSize 
+# unset SDataQDSize
+# unset SDataQESize
+# unset SDataQALen 
+# unset SDataQBLen 
+# unset SDataQCLen  
+# unset SDataQDLen 
+# unset SDataQELen 
+# unset SQualAT 
+# unset SQualBT 
+# unset SQualCT 
+# unset SQualDT 
+# unset SQualET 
+# unset SDataTFColor
+# unset SDataSSColor
+# unset SDataNFColor
+# unset SDataUColor 
+
+echo " ... ended"
+

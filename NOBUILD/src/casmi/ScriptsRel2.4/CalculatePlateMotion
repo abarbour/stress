@@ -1,0 +1,36 @@
+echo " ... working in script CalculatePlateMotion"
+
+# if MotionPlates is negative, we have to split the MotionData file.
+
+echo $MotionPlates '<' 0 > $TEMP/check
+set Check = `awk -f $SCRIPTS/comp.awk $TEMP/check`  
+
+if ($Check == "true") then
+
+   # we have to split the file
+   csplit -k -f $TEMP/RelMotLoc$MotionPlates $MotionData '/>/' '{2}' >& $TEMP/csplit.tmp
+
+   set MotionPlatesP = `awk -v x=$MotionPlates 'BEGIN{val=x*(-1); print val}'`
+   set MotionVelScaleH = `awk -v x=$MotionVelScale 'BEGIN{val=x/2; print val}'`
+   
+   $SCRIPTS/relmotion $MotionPlatesP $MotionVelScaleH <  $TEMP/RelMotLoc$MotionPlates"00" \
+       > $TEMP"/PlateMotion"$MotionPlates"00.gmt"
+
+   $SCRIPTS/relmotion $MotionPlates $MotionVelScaleH <  $TEMP/RelMotLoc$MotionPlates"01" \
+       > $TEMP"/PlateMotion"$MotionPlates"01.gmt"
+
+   echo "$TEMP/PlateMotion"$MotionPlates"00.gmt $TEMP/PlateMotion"$MotionPlates"01.gmt " > $TEMP/PlateMotionList
+
+else 
+
+   # we do not have to split the file
+
+   $SCRIPTS/relmotion $MotionPlates $MotionVelScale <  $MotionData \
+       > $TEMP"/PlateMotion"$MotionPlates"00.gmt"
+
+   echo "$TEMP/PlateMotion"$MotionPlates"00.gmt" > $TEMP/PlateMotionList
+   
+endif
+
+
+echo " ... ended"

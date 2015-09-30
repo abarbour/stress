@@ -1,0 +1,51 @@
+#!/bin/csh
+#########################################################
+#
+# configuration script for casmi under cygwin
+#
+#########################################################
+
+# checks for Cygwin
+if (`uname|head -c 6` == "CYGWIN") then
+  echo "CASMI seems to run under CYGWIN;"
+  echo "trying to make the Help and the Info button work."
+endif
+echo "Follow the instructions:"
+echo
+echo " 1) Search the for the Windows installation of your Adobe Acrobat Reader"
+echo "    executable."
+echo " 2) Open another Cygwin terminal. Go to your CASMI directory:"
+echo "      $ cd ~/casmi"
+echo "    Create a symbolic link to the Adobe Reader executable:"
+echo "      $ ln -s <path_to_acrobat_reader> acroread"
+echo "    Replace <path_to_acrobat_reader> with the correct path, such as:"
+echo "      /cygdrive/c/Programs/Adobe/Reader\ 8.0/Reader/AcroRd32.exe"
+echo "    NOTE: The Windows drive C: is /cygdrive/c in Cygwin;"
+echo "          the space character ' ' is '\ '!!"
+
+# checks for AcroRd link
+echo " 3) Now we should test the 'acroread' link. When you press <Return>,"
+echo "    an Adobe Reader window should pop up; close it, and come back here."
+echo -n "    Press <Return>:"
+$<
+./acroread &
+echo -n " 4) Has the Adobe Reader window popped up? (y/n) :"
+set answer = $<
+if ($answer == "n" || $answer == "N") then
+  echo "    It has not popped up? Then please check your symbolic link (item 2)"
+  echo "    very carefully and re-run this script!"
+  exit
+else if ($answer == "y" || $answer == "Y") then
+  echo "    Very good. Making some changes to CASMI ..."
+else
+  echo "    Not a valid input. Please re-run this script!"
+  exit
+endif
+
+# replacing lines in casmi.pl
+sed s+acroread\",\ \"\$Bin\/DOCUMENTATION\/help.pdf+echo\ \'cd\ \\\\\$HOME/casmi/DOCUMENTATION\;\ acroread\ help.pdf\'\|\ bash+ casmi.pl > sed_tmpfile
+sed s+acroread\",\ \"\$Bin\/DOCUMENTATION\/info.pdf+echo\ \'cd\ \\\\\$HOME/casmi/DOCUMENTATION\;\ acroread\ info.pdf\'\|\ bash+ sed_tmpfile > casmi.pl
+rm sed_tmpfile
+
+echo "All done!"
+

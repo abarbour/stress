@@ -1,0 +1,318 @@
+echo " ... working in script CreateStressLegend"
+
+# calculate how many lines are needed for StressLegend:
+# check if WSMLogo is set
+if ($?WSMLogo) then    # copyright will be plotted, additional lines
+   set CopyrightText = "@~\343@~ (2008) World Stress Map"
+   set addlines = 7
+else 
+   set addlines = 0
+endif
+
+# SH: 22.Sept.98
+if ($?DepthIntLeg == 0) then 
+   set DepthIntLeg = "n"
+endif
+if ($DepthIntLeg == "y") then    # depth interval will be plotted, additional lines
+   if ($Stress1Depth != "all") then
+      set DepthText = "depth interval: $S1DepthTop - ${S1DepthBot}km"
+      set addlines2 = 6
+   else
+      set DepthText = "all depths"
+      set addlines2 = 6
+   endif
+else 
+   set addlines2 = 0
+endif
+
+@ lines = 29 + $addlines + $addlines2
+@ totallines = 65 + $addlines + $addlines2
+
+if ($S1TypeFMS == "y"||$S1TypeFMA == "y"||$S1TypeFMF == "y") @ lines = $lines + 4
+if ($S1TypeBO == "y") @ lines = $lines + 4
+if ($S1TypeOC == "y") @ lines = $lines + 4
+if ($S1TypeHF == "y") @ lines = $lines + 4
+if ($S1TypeGI == "y") @ lines = $lines + 4
+if ($S1TypeDIF == "y") @ lines = $lines + 4
+if ($S1TypeBS == "y") @ lines = $lines + 4
+if ($S1QualA == "y") @ lines = $lines + 4
+if ($S1QualB == "y") @ lines = $lines + 4
+if ($S1QualC == "y") @ lines = $lines + 4
+if ($S1QualD == "y") @ lines = $lines + 4
+if ($S1QualE == "y") @ lines = $lines + 4
+
+# define the size of the stress maps and font size of description
+if(!($?SizeStressLegend)) then
+   set SizeStressLegend = "middle"
+endif
+
+if($SizeStressLegend == "small") then
+   set StressLegWidth = 1.3
+   set FontSizeL = 8
+   set FontSizeM = 7
+   set FontSizeS = 6
+   set FontSizeT = 5
+else if ($SizeStressLegend == "middle") then
+   set StressLegWidth = 1.5
+   set FontSizeL = 9
+   set FontSizeM = 8
+   set FontSizeS = 7
+   set FontSizeT = 6
+else if ($SizeStressLegend == "large") then
+   set StressLegWidth = 1.8
+   set FontSizeL = 10
+   set FontSizeM = 9
+   set FontSizeS = 8
+   set FontSizeT = 7
+else if ($SizeStressLegend == "huge") then
+   set StressLegWidth = 2.3
+   set FontSizeL = 14
+   set FontSizeM = 12
+   set FontSizeS = 10
+   set FontSizeT = 8
+else 
+   set StressLegWidth = 1.5
+   set FontSizeL = 9
+   set FontSizeM = 8
+   set FontSizeS = 7
+   set FontSizeT = 6
+endif
+
+
+# calculate dimensions of Legend:
+#set StressLegHeight = `awk -v x=$StressLegWidth -v a=1.5  'BEGIN{val=x*a; print val}'`
+set StressLegHeight = `awk -v x=$StressLegWidth -v a=$lines -v b=$totallines 'BEGIN{val=1.5*x*a/b; print val}'`
+
+# Font number used for description
+set FontNoL = 1
+set FontNoM = 0
+set FontNoS = 2
+set FontNoT = 2
+
+# Alignments used
+set LC = 2
+set LL = 1
+set ML = 5
+
+set LineInc = `awk -v x=$StressLegHeight -v a=$lines  'BEGIN{val=x/a; print val}'`
+set Midle = `awk -v x=$StressLegWidth -v a=2  'BEGIN{val=x/a; print val}'`
+set RowInc = `awk -v x=$StressLegWidth -v a=22  'BEGIN{val=x/a; print val}'`
+set RowNFT = `awk -v x=$RowInc -v a=3.5  'BEGIN{val=x*a; print val}'`
+set RowNFS = `awk -v x=$RowInc -v a=2.3  'BEGIN{val=x*a; print val}'`
+set RowSST = `awk -v x=$RowInc -v a=9  'BEGIN{val=x*a; print val}'`
+set RowSSS = `awk -v x=$RowInc -v a=7.8  'BEGIN{val=x*a; print val}'`
+set RowTFT = `awk -v x=$RowInc -v a=14.5  'BEGIN{val=x*a; print val}'`
+set RowTFS = `awk -v x=$RowInc -v a=13.3  'BEGIN{val=x*a; print val}'`
+set RowUT = `awk -v x=$RowInc -v a=20  'BEGIN{val=x*a; print val}'`
+set RowUS = `awk -v x=$RowInc -v a=18.8  'BEGIN{val=x*a; print val}'`
+
+set Row1of3 = `awk -v x=$StressLegWidth -v a=3  'BEGIN{val=x/a; print val}'`
+set RowTypeS = `awk -v x=$StressLegWidth -v a=6  'BEGIN{val=x/a; print val}'`
+set Row2of3 = `awk -v x=$StressLegWidth -v a=3  'BEGIN{val=2*x/a; print val}'`
+
+@ lines = $lines - 5
+
+set LineMethod = `awk -v x=$lines -v a=$LineInc  'BEGIN{val=x*a; print val}'`
+@ lines = $lines - 1
+echo  $Midle $LineMethod $FontSizeL 0.0 $FontNoL $LC Method: > $TEMP/StressLegend.text
+
+echo "Type FMS Symbol for Legend" > $TEMP/LegFMSSymb
+echo "Lines for Type Symbols in Legend" > $TEMP/LegTypeSymbLines
+if ($S1TypeFMS == "y"||$S1TypeFMA == "y"||$S1TypeFMF == "y") then 
+ @ lines = $lines - 4
+ set LineFMS = `awk -v x=$lines -v a=$LineInc  'BEGIN{val=x*a; print val}'`
+ echo $Row1of3 $LineFMS $FontSizeM 0.0 $FontNoM $ML focal mechanism >> $TEMP/StressLegend.text
+ awk -f $SCRIPTS/circle.awk -v temp=$TEMP -v keep="yes" lA=$SDataQALen lB=$SDataQBLen lC=$SDataQCLen lD=$SDataQDLen lE=$SDataQELen sA=$S1DataQASize sB=$S1DataQBSize sC=$S1DataQCSize sD=$S1DataQDSize sE=$S1DataQESize << END >> $TEMP/LegFMSSymb
+$RowTypeS $LineFMS 45 0 0 0 FMS B U L 
+END
+endif
+
+echo "Type BO Symbol for Legend" > $TEMP/LegBOSymb
+if ($S1TypeBO == "y") then 
+ @ lines = $lines - 4
+ set LineBO = `awk -v x=$lines -v a=$LineInc  'BEGIN{val=x*a; print val}'`
+ echo  $Row1of3 $LineBO $FontSizeM 0.0 $FontNoM $ML breakouts >> $TEMP/StressLegend.text
+ awk -f $SCRIPTS/arrow.awk -v temp=$TEMP -v keep="yes" lA=$SDataQALen lB=$SDataQBLen lC=$SDataQCLen lD=$SDataQDLen lE=$SDataQELen sA=$S1DataQASize sB=$S1DataQBSize sC=$S1DataQCSize sD=$S1DataQDSize sE=$S1DataQESize << END >> $TEMP/LegBOSymb
+$RowTypeS $LineBO 45 0 0 0 BO B U L 
+END
+endif
+
+echo "Type DIF Symbol for Legend" > $TEMP/LegDIFSymb
+if ($S1TypeDIF == "y") then 
+ @ lines = $lines - 4
+ set LineDIF = `awk -v x=$lines -v a=$LineInc  'BEGIN{val=x*a; print val}'`
+ echo  $Row1of3 $LineDIF $FontSizeM 0.0 $FontNoM $ML drill. induced frac. >> $TEMP/StressLegend.text
+ awk -f $SCRIPTS/dif.awk -v temp=$TEMP -v keep="yes" lA=$SDataQALen lB=$SDataQBLen lC=$SDataQCLen lD=$SDataQDLen lE=$SDataQELen sA=$S1DataQASize sB=$S1DataQBSize sC=$S1DataQCSize sD=$S1DataQDSize sE=$S1DataQESize << END >> $TEMP/LegDIFSymb
+$RowTypeS $LineDIF 45 0 0 0 DIF B U L 
+END
+endif
+
+echo "Type BS Symbol for Legend" > $TEMP/LegBSSymb
+if ($S1TypeBS == "y") then 
+ @ lines = $lines - 4
+ set LineBS = `awk -v x=$lines -v a=$LineInc  'BEGIN{val=x*a; print val}'`
+ echo  $Row1of3 $LineBS $FontSizeM 0.0 $FontNoM $ML borehole slotter >> $TEMP/StressLegend.text
+ awk -f $SCRIPTS/bs.awk -v temp=$TEMP -v keep="yes" lA=$SDataQALen lB=$SDataQBLen lC=$SDataQCLen lD=$SDataQDLen lE=$SDataQELen sA=$S1DataQASize sB=$S1DataQBSize sC=$S1DataQCSize sD=$S1DataQDSize sE=$S1DataQESize << END >> $TEMP/LegBSSymb
+$RowTypeS $LineBS 45 0 0 0 BS B U L 
+END
+endif
+
+echo "Type OC Symbol for Legend" > $TEMP/LegOCSymb
+if ($S1TypeOC == "y") then 
+ @ lines = $lines - 4
+ set LineOC = `awk -v x=$lines -v a=$LineInc  'BEGIN{val=x*a; print val}'`
+ echo  $Row1of3 $LineOC $FontSizeM 0.0 $FontNoM $ML overcoring >> $TEMP/StressLegend.text
+ awk -f $SCRIPTS/oc.awk -v temp=$TEMP -v keep="yes" lA=$S1DataQALen lB=$S1DataQBLen lC=$S1DataQCLen lD=$S1DataQDLen lE=$S1DataQELen << END >> $TEMP/LegOCSymb
+$RowTypeS $LineOC 45 0 0 0 OC B U L 
+END
+endif
+
+echo "Type HF GI Symbols for Legend" > $TEMP/LegHFGISymb
+if ($S1TypeHF == "y") then 
+ @ lines = $lines - 4
+ set LineHF = `awk -v x=$lines -v a=$LineInc  'BEGIN{val=x*a; print val}'`
+ echo  $Row1of3 $LineHF $FontSizeM 0.0 $FontNoM $ML hydro. fractures >> $TEMP/StressLegend.text
+ awk -f $SCRIPTS/star.awk -v temp=$TEMP -v keep="yes"  lA=$SDataQALen lB=$SDataQBLen lC=$SDataQCLen lD=$SDataQDLen lE=$SDataQELen sA=$S1DataQASize sB=$S1DataQBSize sC=$S1DataQCSize sD=$S1DataQDSize sE=$S1DataQESize << END >> $TEMP/LegHFGISymb
+$RowTypeS $LineHF 45 0 0 0 HF B U L 
+END
+endif
+
+if ($S1TypeGI == "y") then 
+ @ lines = $lines - 4
+ set LineGI = `awk -v x=$lines -v a=$LineInc  'BEGIN{val=x*a; print val}'`
+ echo  $Row1of3 $LineGI $FontSizeM 0.0 $FontNoM $ML geol. indicators >> $TEMP/StressLegend.text
+ awk -f $SCRIPTS/box.awk -v temp=$TEMP -v keep="yes"  lA=$SDataQALen lB=$SDataQBLen lC=$SDataQCLen lD=$SDataQDLen lE=$SDataQELen sA=$S1DataQASize sB=$S1DataQBSize sC=$S1DataQCSize sD=$S1DataQDSize sE=$S1DataQESize << END >> $TEMP/LegHFGISymb
+$RowTypeS $LineGI 45 0 0 0 GFI B U L 
+END
+endif
+
+@ lines = $lines - 7
+
+set LineRegime = `awk -v x=$lines -v a=$LineInc  'BEGIN{val=x*a; print val}'`
+@ lines = $lines - 5
+echo  $Midle $LineRegime $FontSizeL 0.0 $FontNoL $LC Regime: >> $TEMP/StressLegend.text
+
+set LineNFSSTFU = `awk -v x=$lines -v a=$LineInc  'BEGIN{val=x*a; print val}'`
+@ lines = $lines - 7
+echo  $RowNFT $LineNFSSTFU $FontSizeM 0.0 $FontNoM $ML NF >> $TEMP/StressLegend.text
+echo  $RowSST $LineNFSSTFU $FontSizeM 0.0 $FontNoM $ML SS >> $TEMP/StressLegend.text
+echo  $RowTFT $LineNFSSTFU $FontSizeM 0.0 $FontNoM $ML TF >> $TEMP/StressLegend.text
+echo  $RowUT $LineNFSSTFU $FontSizeM 0.0 $FontNoM $ML U >> $TEMP/StressLegend.text
+
+echo "StressLegende NF symbol" > $TEMP/LegNFSymbol
+ awk -f $SCRIPTS/circle.awk -v temp=$TEMP -v keep="yes" lA=$SDataQASize lB=$SDataQBSize lC=$SDataQCSize lD=$SDataQDSize lE=$SDataQESize sA=$S1DataQASize sB=$S1DataQBSize sC=$S1DataQCSize sD=$S1DataQDSize sE=$S1DataQESize << END >> $TEMP/LegNFSymbol
+$RowNFS $LineNFSSTFU 45 0 0 0 FMS A NF L 
+END
+
+echo "StressLegende SS symbol" > $TEMP/LegSSSymbol
+ awk -f $SCRIPTS/circle.awk -v temp=$TEMP -v keep="yes" lA=$SDataQASize lB=$SDataQBSize lC=$SDataQCSize lD=$SDataQDSize lE=$SDataQESize sA=$S1DataQASize sB=$S1DataQBSize sC=$S1DataQCSize sD=$S1DataQDSize sE=$S1DataQESize << END >> $TEMP/LegSSSymbol
+$RowSSS $LineNFSSTFU 45 0 0 0 FMS A SS L 
+END
+
+echo "StressLegende SS semi symbol" > $TEMP/LegSSsemiSymbol
+awk -f $SCRIPTS/semicircle.awk -v temp=$TEMP -v keep="yes" sA=$S1DataQASize sB=$S1DataQBSize sC=$S1DataQCSize sD=$S1DataQDSize sE=$S1DataQESize << END >> $TEMP/LegSSsemiSymbol
+$RowSSS $LineNFSSTFU 45 0 0 0 FMA A SS L 
+END
+
+echo "StressLegende TF symbol" > $TEMP/LegTFSymbol
+ awk -f $SCRIPTS/circle.awk -v temp=$TEMP -v keep="yes" lA=$SDataQASize lB=$SDataQBSize lC=$SDataQCSize lD=$SDataQDSize lE=$SDataQESize sA=$S1DataQASize sB=$S1DataQBSize sC=$S1DataQCSize sD=$S1DataQDSize sE=$S1DataQESize << END >> $TEMP/LegTFSymbol
+$RowTFS $LineNFSSTFU 45 0 0 0 FMS A TF L 
+END
+
+echo "StressLegende U symbol" > $TEMP/LegUSymbol
+ awk -f $SCRIPTS/circle.awk -v temp=$TEMP -v keep="yes" lA=$SDataQASize lB=$SDataQBSize lC=$SDataQCSize lD=$SDataQDSize lE=$SDataQESize sA=$S1DataQASize sB=$S1DataQBSize sC=$S1DataQCSize sD=$S1DataQDSize sE=$S1DataQESize << END >> $TEMP/LegUSymbol
+$RowUS $LineNFSSTFU 45 0 0 0 FMS A U L 
+END
+
+
+set LineQuality = `awk -v x=$lines -v a=$LineInc  'BEGIN{val=x*a; print val}'`
+@ lines = $lines - 1
+echo  $Midle $LineQuality $FontSizeL 0.0 $FontNoL $LC Quality: >> $TEMP/StressLegend.text
+
+echo "Line for Quality A in Legend" > $TEMP/LegLineA
+if ($S1QualA == "y") then 
+ @ lines = $lines - 4
+ set LineA = `awk -v x=$lines -v a=$LineInc  'BEGIN{val=x*a; print val}'`
+ echo  $Row1of3 $LineA $FontSizeM 0.0 $FontNoM $ML A >> $TEMP/StressLegend.text
+ # create input file for plotting the line for Quality A
+ awk -f $SCRIPTS/line.awk -v temp=$TEMP -v keep="yes" lA=$S1DataQALen lB=$S1DataQBLen lC=$S1DataQCLen lD=$S1DataQDLen lE=$S1DataQELen << END >> $TEMP/LegLineA
+$Row2of3 $LineA 0.0 0 0 0 L A L 
+END
+endif
+
+echo "Line for Quality B in Legend" > $TEMP/LegLineB
+if ($S1QualB == "y") then 
+  @ lines = $lines - 4
+ set LineB = `awk -v x=$lines -v a=$LineInc  'BEGIN{val=x*a; print val}'`
+ echo  $Row1of3 $LineB $FontSizeM 0.0 $FontNoM $ML B >> $TEMP/StressLegend.text
+ # create input file for plotting the line for Quality B
+ awk -f $SCRIPTS/line.awk -v temp=$TEMP -v keep="yes" lA=$S1DataQALen lB=$S1DataQBLen lC=$S1DataQCLen lD=$S1DataQDLen lE=$S1DataQELen << END >> $TEMP/LegLineB
+$Row2of3 $LineB 0.0 0 0 0 L B L 
+END
+endif
+
+echo "Line for Quality C in Legend" > $TEMP/LegLineC
+if ($S1QualC == "y") then 
+ @ lines = $lines - 4
+ set LineC = `awk -v x=$lines -v a=$LineInc  'BEGIN{val=x*a; print val}'`
+ echo  $Row1of3 $LineC $FontSizeM 0.0 $FontNoM $ML C >> $TEMP/StressLegend.text
+ # create input file for plotting the line for Quality C
+ awk -f $SCRIPTS/line.awk -v temp=$TEMP -v keep="yes" lA=$S1DataQALen lB=$S1DataQBLen lC=$S1DataQCLen lD=$S1DataQDLen lE=$S1DataQELen << END >> $TEMP/LegLineC
+$Row2of3 $LineC 0.0 0 0 0 L C L
+END
+endif
+
+echo "Line for Quality D in Legend" > $TEMP/LegLineD
+if ($S1QualD == "y") then 
+ @ lines = $lines - 4
+ set LineD = `awk -v x=$lines -v a=$LineInc  'BEGIN{val=x*a; print val}'`
+ echo  $Row1of3 $LineD $FontSizeM 0.0 $FontNoM $ML D >> $TEMP/StressLegend.text
+ # create input file for plotting the line for Quality D
+ awk -f $SCRIPTS/line.awk -v temp=$TEMP -v keep="yes" lA=$S1DataQALen lB=$S1DataQBLen lC=$S1DataQCLen lD=$S1DataQDLen lE=$S1DataQELen << END >> $TEMP/LegLineD
+$Row2of3 $LineD 0.0 0 0 0 L D L
+END
+endif
+
+echo "Line for Quality E in Legend" > $TEMP/LegLineE
+if ($S1QualE == "y") then 
+ @ lines = $lines - 4
+ set LineE = `awk -v x=$lines -v a=$LineInc  'BEGIN{val=x*a; print val}'`
+ echo  $Row1of3 $LineE $FontSizeM 0.0 $FontNoM $ML E >> $TEMP/StressLegend.text
+ # create input file for plotting the line for Quality E
+ awk -f $SCRIPTS/line.awk -v temp=$TEMP -v keep="yes" lA=$S1DataQALen lB=$S1DataQBLen lC=$S1DataQCLen lD=$S1DataQDLen lE=$S1DataQELen << END >> $TEMP/LegLineE
+$Row2of3 $LineE 0.0 0 0 0 L E L
+END
+endif
+
+@ lines = $lines - 7
+ 
+ # SH: 22.Sept.98
+if ($DepthIntLeg == "y") then
+ set LineDepthText = `awk -v x=$lines -v a=$LineInc 'BEGIN{val=x*a; print val}'`
+ echo $Midle $LineDepthText $FontSizeM 0.0 $FontNoM $LC $DepthText >> $TEMP/StressLegend.text
+endif
+
+if ($?WSMLogo) then
+if ($DepthIntLeg == "y") @ lines = $lines - 7
+ set LineCopyright = `awk -v x=$lines -v a=$LineInc 'BEGIN{val=x*a; print val}'`
+ echo $Midle $LineCopyright $FontSizeT 0.0 $FontNoT $LC $CopyrightText >> $TEMP/StressLegend.text
+endif
+
+
+# determine Origin of StressLegend with respect to ll corner of map:
+if ($PosStressLegend == "ll") then 
+   set StressLegXShift = 0
+   set StressLegYShift = 0
+else if ($PosStressLegend == "lr") then 
+   set StressLegXShift = `awk -v x=$PlotWidth -v y=$StressLegWidth 'BEGIN{val=x-y; print val}'`
+   set StressLegYShift = 0 
+else if ($PosStressLegend == "ur") then 
+   set StressLegXShift = `awk -v x=$PlotWidth -v y=$StressLegWidth 'BEGIN{val=x-y; print val}'`
+   set StressLegYShift = `awk -v x=$PlotHeight -v y=$StressLegHeight 'BEGIN{val=x-y; print val}'` 
+else if ($PosStressLegend == "ul") then 
+   set StressLegXShift = 0
+   set StressLegYShift = `awk -v x=$PlotHeight -v y=$StressLegHeight 'BEGIN{val=x-y; print val}'` 
+endif
+
+echo " ... ended"
+

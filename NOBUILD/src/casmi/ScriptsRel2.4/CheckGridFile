@@ -1,0 +1,14 @@
+# Script checking if the file CheckFile has the desired range and projection
+
+set Check = "no"
+
+# first: if gridfile exists run grdinfo
+
+if(-e $CheckFile)then
+  
+  grdinfo $CheckFile > $TEMP/info.grdfile
+ 
+  # second run awk to extract the region and projection.
+  set Check = `awk -f $SCRIPTS/extractgrdinfo.awk origfile=$CheckOrigFile range=$GMTRange proj=$GMTProjection resol=$CheckResolution $TEMP/info.grdfile `
+   
+endif

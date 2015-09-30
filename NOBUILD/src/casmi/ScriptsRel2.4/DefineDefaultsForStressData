@@ -1,0 +1,396 @@
+echo " ... working in script DefineDefaultStressData"
+
+# FIRST PART: setting the default values for Stress data file one
+# setting the default values
+   if ($Stress1Type == "all") then 
+     set S1TypeFMS = "y"
+     set S1TypeFMA = "y"
+     set S1TypeFMF = "y"
+     set S1TypeOC  = "y"
+     set S1TypeHF  = "y"
+     set S1TypeBO  = "y"
+     set S1TypeGI  = "y"
+     set S1TypeDIF = "y"
+     set S1TypeBS = "y"
+     set StressTypeInfo = " using all types "
+  else 
+     set StressTypeInfo = " using the choosen types "
+  endif   
+  
+  if ($S1_Regimes == "all") then 
+     set S1_Regime_TF = "y"
+     set S1_Regime_TS = "y"
+     set S1_Regime_SS = "y"
+     set S1_Regime_NS = "y"
+     set S1_Regime_NF = "y"
+     set S1_Regime_U = "y"
+     set StressRegimeInfo = " using all regimes "
+  else 
+     set StressRegimeInfo = " using the choosen regimes "
+  endif   
+  
+  if ($Stress1Quality == "all") then 
+     set S1QualA = "y"
+     set S1QualB = "y"
+     set S1QualC = "y"
+     set S1QualD = "y"
+     set S1QualE = "y"
+     set StressQualityInfo = " using all qualities"
+  else 
+     set StressQualityInfo = " using the the choosen qualities"
+  endif   
+
+  if ($Stress1Depth == "all") then
+     set S1DepthTop = "0"
+     set S1DepthBot = "999"
+     set StressDepthInfo = " using all depths"
+  else
+     set StressDepthInfo = " using the choosen depths"
+  endif
+
+  # size of symbols 
+  if ($Stress1DataSize == "default" || $Stress1DataSize == "middle") then
+      set S1DataQASize = 0.1
+  else if ($Stress1DataSize == "verytiny" ) then 
+      set S1DataQASize = 0.05
+  else if ($Stress1DataSize == "tiny" ) then 
+      set S1DataQASize = 0.07
+  else if ($Stress1DataSize == "small" ) then 
+      set S1DataQASize = 0.08
+  else if ($Stress1DataSize == "large" ) then 
+      set S1DataQASize = 0.12 
+  endif
+  if ($Stress1DataSize != "user_defined") then 
+      set S1DataQBSize = `awk -v x=$S1DataQASize -v p=0.8 'BEGIN{val=x*p; print val}'`
+      set S1DataQCSize = `awk -v x=$S1DataQASize -v p=0.6 'BEGIN{val=x*p; print val}'`
+      set S1DataQDSize = `awk -v x=$S1DataQASize -v p=0.25 'BEGIN{val=x*p; print val}'`
+      set S1DataQESize = `awk -v x=$S1DataQASize -v p=0.25 'BEGIN{val=x*p; print val}'`
+  endif
+
+
+     
+  # Length of symbols
+
+  if ($Stress1DataLen == "default" || $Stress1DataLen == "middle") then
+      set S1DataQALen = 0.45
+  else if ($Stress1DataLen == "verytiny") then
+      set S1DataQALen = 0.25
+  else if ($Stress1DataLen == "tiny") then
+      set S1DataQALen = 0.30
+  else if ($Stress1DataLen == "small") then
+      set S1DataQALen = 0.35
+  else if ($Stress1DataLen == "large") then
+      set S1DataQALen = 0.55
+  endif
+  if ($Stress1DataLen != "user_defined") then
+      set S1DataQBLen = `awk -v x=$S1DataQALen -v p=0.8 'BEGIN{val=x*p; print val}'`
+      set S1DataQCLen = `awk -v x=$S1DataQALen -v p=0.6 'BEGIN{val=x*p; print val}'`
+      set S1DataQDLen = `awk -v x=$S1DataQALen -v p=0.25 'BEGIN{val=x*p; print val}'`
+      set S1DataQELen = `awk -v x=$S1DataQALen -v p=0.05 'BEGIN{val=x*p; print val}'`
+  endif
+
+
+  # thickness of lines and outlines of symbols 
+  # Thickness of the lines 
+  if (!($?Stress1DataT)) then
+    set Stress1DataT = "middle"
+  endif
+  
+  if ($Stress1DataT == "small") then
+    set S1QualAT = 1
+    set S1QualBT = 1
+    set S1QualCT = 1
+    set S1QualDT = 1
+    set S1QualET = 1
+  else if ($Stress1DataT == "middle") then
+    set S1QualAT = 2
+    set S1QualBT = 2
+    set S1QualCT = 2
+    set S1QualDT = 2
+    set S1QualET = 2
+  else if ($Stress1DataT == "large") then
+    set S1QualAT = 3
+    set S1QualBT = 3
+    set S1QualCT = 3
+    set S1QualDT = 3
+    set S1QualET = 3
+  endif
+      
+  # color of symbols ( )
+  if ($Stress1DataColor == "default") then
+    set S1DataTFColor = 0/0/200    # blue
+    set S1DataSSColor = 0/200/0    # green 
+    set S1DataNFColor = 200/0/0    # red 
+    set S1DataUColor  = 0/0/0      # black 
+   else if ($Stress1DataColor == "black") then
+    set S1DataTFColor = 0/0/0      # black
+    set S1DataSSColor = 0/0/0      # black
+    set S1DataNFColor = 0/0/0      # black
+    set S1DataUColor  = 0/0/0      # black 
+  endif  
+
+  if (!($?Stress1SC)) then
+    set Stress1SC = "n"
+  endif  
+
+
+# SECOND PART: setting the default values for Stress data file two
+if (Stress2Data != "no") then
+## setting the default values
+   if ($Stress2Type == "all") then 
+     set S2TypeFMS = "y"
+     set S2TypeFMA = "y"
+     set S2TypeFMF = "y"
+     set S2TypeOC  = "y"
+     set S2TypeHF  = "y"
+     set S2TypeBO  = "y"
+     set S2TypeGI  = "y"
+     set S2TypeDIF = "y"
+     set S2TypeBS = "y"
+     set StressTypeInfo = " using all types "
+  else 
+     set StressTypeInfo = " using the choosen types "
+  endif   
+  
+  if ($S2_Regimes == "all") then 
+     set S2_Regime_TF = "y"
+     set S2_Regime_TS = "y"
+     set S2_Regime_SS = "y"
+     set S2_Regime_NS = "y"
+     set S2_Regime_NF = "y"
+     set S2_Regime_U = "y"
+     set StressRegimeInfo = " using all regimes "
+  else 
+     set StressRegimeInfo = " using the choosen regimes "
+  endif   
+  
+  if ($Stress2Quality == "all") then 
+     set S2QualA = "y"
+     set S2QualB = "y"
+     set S2QualC = "y"
+     set S2QualD = "y"
+     set S2QualE = "y"
+     set StressQualityInfo = " using all qualities"
+  else 
+     set StressQualityInfo = " using the the choosen qualities"
+  endif   
+
+  if ($Stress2Depth == "all") then
+     set S2DepthTop = "0"
+     set S2DepthBot = "999"
+     set StressDepthInfo = " using all depths"
+  else
+     set StressDepthInfo = " using the choosen depths"
+  endif
+
+  # size of symbols
+  if ($Stress2DataSize == "default" || $Stress2DataSize == "middle") then
+      set S2DataQASize = 0.1
+  else if ($Stress2DataSize == "verytiny" ) then 
+      set S2DataQASize = 0.05
+  else if ($Stress2DataSize == "tiny" ) then 
+      set S2DataQASize = 0.07
+  else if ($Stress2DataSize == "small" ) then 
+      set S2DataQASize = 0.08
+  else if ($Stress2DataSize == "large" ) then 
+      set S2DataQASize = 0.12 
+  endif
+  if ($Stress2DataSize != "user_defined") then 
+      set S2DataQBSize = `awk -v x=$S2DataQASize -v p=0.8 'BEGIN{val=x*p; print val}'`
+      set S2DataQCSize = `awk -v x=$S2DataQASize -v p=0.6 'BEGIN{val=x*p; print val}'`
+      set S2DataQDSize = `awk -v x=$S2DataQASize -v p=0.25 'BEGIN{val=x*p; print val}'`
+      set S2DataQESize = `awk -v x=$S2DataQASize -v p=0.25 'BEGIN{val=x*p; print val}'`
+  endif
+    
+     
+  # Length of symbols
+  if ($Stress2DataLen == "default" || $Stress2DataLen == "middle") then
+      set S2DataQALen = 0.45
+  else if ($Stress2DataLen == "verytiny") then
+      set S2DataQALen = 0.25
+  else if ($Stress2DataLen == "tiny") then
+      set S2DataQALen = 0.30
+  else if ($Stress2DataLen == "small") then
+      set S2DataQALen = 0.35
+  else if ($Stress2DataLen == "large") then
+      set S2DataQALen = 0.55
+  endif
+  if ($Stress2DataLen != "user_defined") then 
+      set S2DataQBLen = `awk -v x=$S2DataQALen -v p=0.8 'BEGIN{val=x*p; print val}'`
+      set S2DataQCLen = `awk -v x=$S2DataQALen -v p=0.6 'BEGIN{val=x*p; print val}'`
+      set S2DataQDLen = `awk -v x=$S2DataQALen -v p=0.25 'BEGIN{val=x*p; print val}'`
+      set S2DataQELen = `awk -v x=$S2DataQALen -v p=0.05 'BEGIN{val=x*p; print val}'`
+  endif
+  
+  # thickness of lines and outlines of symbols 
+  # Thickness of the lines 
+  if (!($?Stress2DataT)) then
+    set Stress2DataT = "middle"
+  endif
+  
+  if ($Stress2DataT == "small") then
+    set S2QualAT = 1
+    set S2QualBT = 1
+    set S2QualCT = 1
+    set S2QualDT = 1
+    set S2QualET = 1
+  else if ($Stress2DataT == "middle") then
+    set S2QualAT = 2
+    set S2QualBT = 2
+    set S2QualCT = 2
+    set S2QualDT = 2
+    set S2QualET = 2
+  else if ($Stress2DataT == "large") then
+    set S2QualAT = 3
+    set S2QualBT = 3
+    set S2QualCT = 3
+    set S2QualDT = 3
+    set S2QualET = 3
+  endif
+     
+  # color of symbols ( )
+  if ($Stress2DataColor == "default") then
+    set S2DataTFColor = 0/0/255    # blue
+    set S2DataSSColor = 0/255/0    # green 
+    set S2DataNFColor = 255/0/0    # red 
+    set S2DataUColor = 0/0/0       # black 
+   else if ($Stress2DataColor == "black") then
+    set S2DataTFColor = 0/0/0      # black
+    set S2DataSSColor = 0/0/0      # black
+    set S2DataNFColor = 0/0/0      # black
+    set S2DataUColor  = 0/0/0      # black 
+  endif  
+
+  if (!($?Stress2SC)) then
+    set Stress2SC = "n"
+  endif  
+
+# THIRD PART: setting the default values for Stress data file three
+if (Stress3Data != "no") then
+## setting the default values
+   if ($Stress3Type == "all") then 
+     set S3TypeFMS = "y"
+     set S3TypeFMA = "y"
+     set S3TypeFMF = "y"
+     set S3TypeOC  = "y"
+     set S3TypeHF  = "y"
+     set S3TypeBO  = "y"
+     set S3TypeGI  = "y"
+     set S3TypeDIF = "y"
+     set S3TypeBS = "y"
+     set StressTypeInfo = " using all types "
+  else 
+     set StressTypeInfo = " using the choosen types "
+  endif   
+  
+  if ($S3_Regimes == "all") then 
+     set S3_Regime_TF = "y"
+     set S3_Regime_TS = "y"
+     set S3_Regime_SS = "y"
+     set S3_Regime_NS = "y"
+     set S3_Regime_NF = "y"
+     set S3_Regime_U = "y"
+     set StressRegimeInfo = " using all regimes "
+  else 
+     set StressRegimeInfo = " using the choosen regimes "
+  endif   
+  
+  if ($Stress3Quality == "all") then 
+     set S3QualA = "y"
+     set S3QualB = "y"
+     set S3QualC = "y"
+     set S3QualD = "y"
+     set S3QualE = "y"
+     set StressQualityInfo = " using all qualities"
+  else 
+     set StressQualityInfo = " using the the choosen qualities"
+  endif   
+
+  if ($Stress3Depth == "all") then
+     set S3DepthTop = "0"
+     set S3DepthBot = "999"
+     set StressDepthInfo = " using all depths"
+  else
+     set StressDepthInfo = " using the choosen depths"
+  endif
+
+  # size of symbols
+  if ($Stress3DataSize == "default" || $Stress3DataSize == "middle") then
+      set S3DataQASize = 0.1
+  else if ($Stress3DataSize == "verytiny" ) then 
+      set S3DataQASize = 0.05
+  else if ($Stress3DataSize == "tiny" ) then 
+      set S3DataQASize = 0.07
+  else if ($Stress3DataSize == "small" ) then 
+      set S3DataQASize = 0.08
+  else if ($Stress3DataSize == "large" ) then 
+      set S3DataQASize = 0.12 
+  endif
+  if ($Stress3DataSize != "user_defined") then 
+      set S3DataQBSize = `awk -v x=$S3DataQASize -v p=0.8 'BEGIN{val=x*p; print val}'`
+      set S3DataQCSize = `awk -v x=$S3DataQASize -v p=0.6 'BEGIN{val=x*p; print val}'`
+      set S3DataQDSize = `awk -v x=$S3DataQASize -v p=0.25 'BEGIN{val=x*p; print val}'`
+      set S3DataQESize = `awk -v x=$S3DataQASize -v p=0.25 'BEGIN{val=x*p; print val}'`
+  endif
+    
+     
+  # Length of symbols
+  if ($Stress3DataLen == "default" || $Stress3DataLen == "middle") then
+      set S3DataQALen = 0.45
+  else if ($Stress3DataLen == "verytiny") then
+      set S3DataQALen = 0.25
+  else if ($Stress3DataLen == "tiny") then
+      set S3DataQALen = 0.30
+  else if ($Stress3DataLen == "small") then
+      set S3DataQALen = 0.35
+  else if ($Stress3DataLen == "large") then
+      set S3DataQALen = 0.55
+  endif
+  if ($Stress3DataLen != "user_defined") then 
+      set S3DataQBLen = `awk -v x=$S3DataQALen -v p=0.8 'BEGIN{val=x*p; print val}'`
+      set S3DataQCLen = `awk -v x=$S3DataQALen -v p=0.6 'BEGIN{val=x*p; print val}'`
+      set S3DataQDLen = `awk -v x=$S3DataQALen -v p=0.25 'BEGIN{val=x*p; print val}'`
+      set S3DataQELen = `awk -v x=$S3DataQALen -v p=0.05 'BEGIN{val=x*p; print val}'`
+  endif
+  
+  # thickness of lines and outlines of symbols 
+  # Thickness of the lines 
+  if (!($?Stress3DataT)) then
+    set Stress3DataT = "middle"
+  endif
+  
+  if ($Stress3DataT == "small") then
+    set S3QualAT = 1
+    set S3QualBT = 1
+    set S3QualCT = 1
+    set S3QualDT = 1
+    set S3QualET = 1
+  else if ($Stress3DataT == "middle") then
+    set S3QualAT = 2
+    set S3QualBT = 2
+    set S3QualCT = 2
+    set S3QualDT = 2
+    set S3QualET = 2
+  else if ($Stress3DataT == "large") then
+    set S3QualAT = 3
+    set S3QualBT = 3
+    set S3QualCT = 3
+    set S3QualDT = 3
+    set S3QualET = 3
+  endif
+     
+  # color of symbols ( )
+  if ($Stress3DataColor == "default") then
+    set S3DataTFColor = 0/0/255    # blue
+    set S3DataSSColor = 0/255/0    # green 
+    set S3DataNFColor = 255/0/0    # red 
+    set S3DataUColor = 0/0/0       # black 
+   else if ($Stress3DataColor == "black") then
+    set S3DataTFColor = 0/0/0      # black
+    set S3DataSSColor = 0/0/0      # black
+    set S3DataNFColor = 0/0/0      # black
+    set S3DataUColor  = 0/0/0      # black 
+  endif  
+endif
+
+echo " ... ended"

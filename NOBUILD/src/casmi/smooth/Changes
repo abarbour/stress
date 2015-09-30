@@ -1,0 +1,33 @@
+Version 1.2 -> 1.21:
+    No of Iteration steps can be given manually, the default is (as with version
+    1.2 set to 1500).
+Version 1.21 -> 1.22:    
+    option -H to give number of headerlines in inputfile, default is one line header Version 1.21 -> 1.22:    
+Version 1.22 -> 1.3: 
+    distance weight rtwf and twf can also be used for constant smoothing radius option  
+Version 1.3 -> 1.4: 
+    Interactive mode for calculating trajectories
+Version 1.41 -> 1.42:
+    Changed output format for sdat slightly, numbers were sticking together.    
+Version 1.42 -> 1.5:
+    error in distance weighting (rtwf together with -A option)
+    both distance weightings possible for -A or -N option
+Version 1.5 -> 1.51:
+    when writing trajectories the deviation is given in the third column. This 
+    can be read by the GMT script and be used to display the deviation in color.
+Version 1.51 -> 1.52:     
+    -I Option applies to trajectories too.
+Version 1.52 -> 1.53:
+    Warning included if iteration didn't suceed    
+Version 1.53 -> 2.0:
+    Removed error when calculating -S .sdat . The stress field at these points
+     did not coincide with the grdm and .trjs. 
+    Changed notation of weightingfunctions according to my diss.
+     nid -> pdf (only in the input, internally not changed up to now
+     rnid -> rpdf
+    Added new weightingfunction:
+     ntwf: rescaling not by summ of all weights but by number of NN 
+     npdf: rescaling not by summ of all weights but by number of NN         
+Version 2.102 UNUSED: different weighting sheme, not so sucessfull for data.
+Version 2.2: additional number of data in bins weighting
+     nbtwf or nbpdf: for using with -A option         

@@ -1,0 +1,46 @@
+echo " ... working in script PrepareFE_StressData"
+# SH: 6.Okt98
+# entspricht im Wesentlicen PrepareGridmapStressData
+
+# FIRST PART: setting the default values for Smoothed Stress data 
+# setting the default values, these values should be the same as for the 
+# normal stress data. As we plot two vectors, we have to devide the nubers by 2.
+# this is done at the end of this script.
+if (!($?FE_StressColCode)) then 
+	set FE_StressColCode = "azi"
+endif
+
+  # Length of symbols 
+  if ($FE_StressDataLen == "default" || $FE_StressDataLen == "middle") then
+      set FE_StressDataLen = 0.45
+  else if ($FE_StressDataLen == "tiny") then
+      set FE_StressDataLen = 0.30
+  else if ($FE_StressDataLen == "small") then
+      set FE_StressDataLen = 0.35
+  else if ($FE_StressDataLen == "large") then
+      set FE_StressDataLen = 0.55
+  endif
+ 
+  set FE_StressDataLen = `awk -v x=$FE_StressDataLen 'BEGIN{val=(x)/2; print val}'`
+  
+  # find out if color of lines is determined by commandoption -W (FE_StressCPT > 0) 
+  # or by commandoption -C (FE_StressCPT == 0)
+  set FE_StressCPT = `awk -v x=$FE_StressDataCol 'BEGIN{val=index(x,"W"); print val}'`
+
+  # if commandoption -W is used, set fill color for arrows
+  if ($FE_StressCPT > 0) then
+    set FE_StressDataPen = " "
+    set FE_StressDataFil = `awk -v x=$FE_StressDataCol 'BEGIN{val=index(x,"/"); print "-G"substr(x,val+1)}'`
+  else 
+    # set fill color to empty string and the pen attributes to a line with 
+    # short dashes and long gaps
+    set FE_StressDataPen = "-W1/0/0/0t1_10000:9000"
+    set FE_StressDataFil = " "
+  endif
+    
+# SECOND PART: call preparegrdm.awk to add 4th colunm giving the length for
+# plotting with gmt.
+
+  awk -f $SCRIPTS/prepareFE_stress.awk -v lengt=$FE_StressDataLen -v cpt=$FE_StressCPT -v colcode=$FE_StressColCode $FE_StressData > $TEMP/FE_StressData.gmt
+
+echo " ... ended"

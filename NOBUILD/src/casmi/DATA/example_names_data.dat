@@ -1,0 +1,3 @@
+# data format is: 1 line header, data: longitude latitude label [justify]
+20 50 Berlin
+12 51 Texas

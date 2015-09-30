@@ -1,0 +1,77 @@
+echo " ... working in script PrepareSmoothedStressData"
+
+# FIRST PART: setting the default values for Smoothed Stress data 
+# setting the default values, these values should be the same as for the 
+# normal stress data. As we plot two vectors, we have to devide the nubers by 2.
+# this is done at the end of this script.
+  # Length of symbols (default values depend on the PaperSize)
+  if ($PaperSize == "A4" || $PaperSize == "Letter" || $PaperSize == "Legal") then
+
+    if ($SmSmDataLen == "default" || $SmSmDataLen == "middle") then
+      set SmSmDataLen = 0.45
+    else if ($SmSmDataLen == "tiny") then
+      set SmSmDataLen = 0.30
+    else if ($SmSmDataLen == "small") then
+      set SmSmDataLen = 0.35
+    else if ($SmSmDataLen == "large") then
+      set SmSmDataLen = 0.55
+    endif
+
+  else if ($PaperSize == "A3" || $PaperSize == "Tabloid") then
+
+    if ($SmSmDataLen == "default" || $SmSmDataLen == "middle") then
+      set SmSmDataLen = 0.45
+    else if ($SmSmDataLen == "tiny") then
+      set SmSmDataLen = 0.30
+    else if ($SmSmDataLen == "small") then
+      set SmSmDataLen = 0.35
+    else if ($SmSmDataLen == "large") then
+      set SmSmDataLen = 0.55
+    endif
+
+  else if ($PaperSize == "A2") then
+
+    if ($SmSmDataLen == "default" || $SmSmDataLen == "middle") then
+      set SmSmDataLen = 0.55
+    else if ($SmSmDataLen == "tiny") then
+      set SmSmDataLen = 0.35
+    else if ($SmSmDataLen == "small") then
+      set SmSmDataLen = 0.45
+    else if ($SmSmDataLen == "large") then
+      set SmSmDataLen = 0.65
+    endif
+
+  else if ($PaperSize == "A1") then
+
+    if ($SmSmDataLen == "default" || $SmSmDataLen == "middle") then
+      set SmSmDataLen = 0.55
+    else if ($SmSmDataLen == "tiny") then
+      set SmSmDataLen = 0.35
+    else if ($SmSmDataLen == "small") then
+      set SmSmDataLen = 0.45
+    else if ($SmSmDataLen == "large") then
+      set SmSmDataLen = 0.65
+    endif
+
+  else if ($PaperSize == "A0") then
+
+    if ($SmSmDataLen == "default" || $SmSmDataLen == "middle") then
+      set SmSmDataLen = 0.60
+    else if ($SmSmDataLen == "tiny") then
+      set SmSmDataLen = 0.35
+    else if ($SmSmDataLen == "small") then
+      set SmSmDataLen = 0.45
+    else if ($SmSmDataLen == "large") then
+      set SmSmDataLen = 0.75
+    endif
+
+  endif
+ 
+  set SmSmDataLen = `awk -v x=$SmSmDataLen 'BEGIN{val=(x)/2; print val}'`
+
+# SECOND PART: call preparesdat.awk to add 4th colunm giving the length for
+# plotting with gmt.
+
+  awk -f $SCRIPTS/preparesdat.awk -v lengt=$SmSmDataLen $SmSmData > $TEMP/SmSmData.gmt
+
+echo " ... ended"

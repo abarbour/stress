@@ -1,0 +1,56 @@
+echo " ... working in script DefineStress3Data"
+
+##set the variables used for the script CalculateStressData
+
+set TEMP_S = $TEMP3
+
+set PBE_filter_flag = 'inactive'
+
+set StressData = $Stress3Data
+
+set STypeFMS = $S3TypeFMS
+set STypeOC  = $S3TypeOC
+set STypeHF  = $S3TypeHF
+set STypeBO  = $S3TypeBO  
+set STypeGI  = $S3TypeGI 
+set STypeDIF = $S3TypeDIF
+set STypeBS  = $S3TypeBS
+
+set SQualA = $S3QualA
+set SQualB = $S3QualB
+set SQualC = $S3QualC
+set SQualD = $S3QualD
+set SQualE = $S3QualE
+
+set SDepthTop = $S3DepthTop
+set SDepthBot = $S3DepthBot
+
+set SDataQASize =  $S3DataQASize
+set SDataQBSize =  $S3DataQBSize
+set SDataQCSize =  $S3DataQCSize 
+set SDataQDSize =  $S3DataQDSize
+set SDataQESize =  $S3DataQESize
+
+set SDataQALen = $S3DataQALen
+set SDataQBLen = $S3DataQBLen
+set SDataQCLen = $S3DataQCLen 
+set SDataQDLen = $S3DataQDLen
+set SDataQELen = $S3DataQELen
+
+set SQualAT = $S3QualAT
+set SQualBT = $S3QualBT
+set SQualCT = $S3QualCT
+set SQualET = $S3QualET
+
+set SDataTFColor = $S3DataTFColor
+set SDataSSColor = $S3DataSSColor      
+set SDataNFColor = $S3DataNFColor
+set SDataUColor = $S3DataUColor
+
+set StressSC = $Stress3SC
+if ($Stress3SC == "y") then
+   set StressSCCol = $Stress3SCCol
+   set StressSCFontSiz = $Stress3SCFontSiz
+endif   
+
+echo " ... ended"
