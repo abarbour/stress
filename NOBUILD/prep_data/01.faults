@@ -1,0 +1,31 @@
+#!/bin/sh
+set -e
+SRC="../src/casmi/DATA/BIRD_plate_boundaries.dat"
+cat << XXX
+#
+# Bird (2003) plate boundary faults
+#
+# local source: ${SRC}
+# `date`
+#
+Lon        Lat          X     Y  Flt FltSeg
+XXX
+#  -0.4379  -54.8518    AF    AN 1 1
+grep -v ^'!' ${SRC} | awk 'BEGIN{
+	seg=0
+	fseg=0
+} NF==4 {
+	fseg++
+	#if (seg > 1){
+	#  if (fseg>1){
+	#    print $0,seg,fseg-1
+	#  }
+	#} else {
+	#  print $0,seg,fseg
+	#}
+	print $0,seg,fseg
+} NF!=4 {
+	fseg=0
+	seg++
+	print " NA NA NA NA",seg,fseg
+}'

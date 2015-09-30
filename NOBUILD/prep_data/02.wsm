@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+set -e
+#
+cat << XXX
+#
+# Full WSM-2008 database
+#
+# local source: ${SRC}
+# `date`
+#
+Lat Lon SHazimuth Type Quality Regime Depth Site No PB N
+XXX
+#-9.00   30.00   71   FMS   C   SS   0.00   MAR   1   NO   CTF   539
+#-6.06   31.49   26   FMS   D   NF   33.00   MAR   2   NO   CCB   282
+#-5.23   34.05   102   FMS   D   SS   1.00   MAR   3   NO   CCB   2
+SRC="../src/casmi/DATA/wsm.dat"
+cat ${SRC} |\
+awk '{
+  $10=""
+  print
+}'
