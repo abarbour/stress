@@ -48,7 +48,7 @@ read.wsm <- function(request.id, data.dir=file.path(request.id), ...){
   } else {
     stop('unclear what column names should be. check input format of ', rid)
   }
-  # Values are [0,180]; restrict to [0,180)
+  # Values are [0,180] restrict to [0,180)
   dplyr::mutate(wsm, SHazimuth = SHazimuth %% 180) -> wsm
   attr(wsm, 'wsm.params') <- list(id=rid, local.source=full.dat.path, release=release)
   class(wsm) <- c('wsm','data.frame')
