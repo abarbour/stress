@@ -1,8 +1,9 @@
-# .travis.yml for 'stress'
+# R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
 
-language: r
-warnings_are_errors: false
+language: R
 sudo: required
+cache: packages
+warnings_are_errors: false
 
 r_binary_packages:
   - plyr
@@ -17,11 +18,8 @@ r_binary_packages:
   - R.matlab
   - testthat
   - TeachingDemos
-#currently unavailable:  - viridis
-
-r_github_packages:
-  - jimhester/covr
-  - sjmgarnier/viridis
+  - viridis
+  - covr
 
 notifications:
   email:
