@@ -12,6 +12,7 @@ src/*.dll
 *-Ex.R
 
 # RStudio files
+*.Rproj
 .Rproj.user/
 
 # produced vignettes
