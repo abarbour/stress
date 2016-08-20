@@ -18,9 +18,11 @@ r_binary_packages:
   - R.matlab
   - testthat
   - TeachingDemos
-  - viridis
   - covr
 
+-r_github_packages:
+ - sjmgarnier/viridis
+ 
 notifications:
   email:
     on_success: change
