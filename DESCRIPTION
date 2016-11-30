@@ -1,11 +1,12 @@
 Package: stress
 Type: Package
-Title: Tools for Working with Stress Inversion Results
+Title: Tools for Working with Stresses and Focal-mechanism Inversions
 Version: 0.0.9999
-Date: 2015-09-21
+Date: 2016-11-30
 Author: Andrew J Barbour
 Maintainer: Andrew J Barbour <andy.barbour@gmail.com>
-Description: Tools for working with inversions of focal mechanisms for stress state.
+Description: Tools for working with stress and strain tensors
+    and inversions of focal mechanisms for stress state.
 LazyData: TRUE
 License: GPL (>= 2)
 URL: https://github.com/abarbour/stress
@@ -30,7 +31,6 @@ Imports:
     raster,
     Rcpp (>= 0.12.0),
     R.matlab
-VignetteBuilder:
-    knitr
-LinkingTo:
-    Rcpp
+VignetteBuilder: knitr
+LinkingTo: Rcpp
+RoxygenNote: 5.0.1
