@@ -56,4 +56,3 @@ TP(runif(20, min = 180, max = 270),c(45,55), pt.col='red', add=TRUE, relpos=c(2,
 Dips: An Interactive and Graphical Approach to the Analysis of Orientation Based Data,
 \url{https://www.rocscience.com/documents/pdfs/uploads/7672.pdf}
 }
-

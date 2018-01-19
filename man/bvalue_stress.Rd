@@ -19,4 +19,3 @@ Differential stress (S1 - S3) may be inversely proportional to b-value Scholz (2
 bvalue_stress() # 1.0 characteristic of So CA: 192 MPa
 bvalue_stress(c(0.85,0.90,1.0))
 }
-

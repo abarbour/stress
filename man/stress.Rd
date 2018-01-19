@@ -8,4 +8,3 @@
 \seealso{
 \code{\link{msatsi-methods}}
 }
-

@@ -59,4 +59,3 @@ plot(r.z, col=viridis(n), zlim=c(0,1))
 \seealso{
 \code{\link{read.msatsi_summary_ext}}, \code{\link[raster]{brick}}
 }
-

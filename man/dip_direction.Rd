@@ -12,4 +12,3 @@ dip_direction(strike = 0)
 \description{
 Calculate dip direction from strike
 }
-

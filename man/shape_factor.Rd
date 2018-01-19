@@ -36,4 +36,3 @@ Note that the \code{\link{stress_ratio}} is:
  R = 1 - \phi = \frac{S1 - S2}{S1 - S3}
 }
 }
-

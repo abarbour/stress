@@ -19,4 +19,3 @@ the origin to the origin + 360; setting this negates \code{dtheta}}
 \description{
 Return a unit circle
 }
-

@@ -7,11 +7,21 @@ using namespace Rcpp;
 
 // rcpp_hello
 List rcpp_hello();
-RcppExport SEXP stress_rcpp_hello() {
+RcppExport SEXP _stress_rcpp_hello() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     rcpp_result_gen = Rcpp::wrap(rcpp_hello());
     return rcpp_result_gen;
 END_RCPP
+}
+
+static const R_CallMethodDef CallEntries[] = {
+    {"_stress_rcpp_hello", (DL_FUNC) &_stress_rcpp_hello, 0},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_stress(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
 }

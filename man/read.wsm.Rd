@@ -44,4 +44,3 @@ Heidbach, O., and J. Hohne (2008),
 Computers and Geosciences, 34 (7), 783-791,
 \url{http://dx.doi.org/10.1016/j.cageo.2007.06.004}
 }
-

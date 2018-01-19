@@ -21,4 +21,3 @@ Principal stress ratio
 \seealso{
 \code{\link{shape_factor}}
 }
-
