@@ -62,3 +62,4 @@ TP <- function(ang.trend, ang.plunge, r=NULL, add=FALSE, pt.pch=16, pt.col='blac
   }
   points(XYc+shift, cex=pt.cex, pch=pt.pch, col=pt.col)
 }
+

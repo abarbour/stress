@@ -5,7 +5,7 @@
 #' the fault prior to the earthquake (theta)
 #' for a given stress drop (dTau) relative to pre-mainshock levels (Tau).
 #'
-#' @references Hardebeck and Hauksson (2001): \url{http://dx.doi.org/10.1029/2001JB000292}
+#' @references Hardebeck and Hauksson (2001): \url{https://doi.org/10.1029/2001JB000292}
 #' @export
 #'
 #' @param theta.deg numeric;

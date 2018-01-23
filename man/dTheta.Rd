@@ -26,5 +26,5 @@ All.dthet <- plyr::ldply(rats, function(r) dTheta(thet., dTau=r))
 matplot(x=thet., t(All.dthet), type='l', col=c(5:1,NA,1:5), lty=c(1:5,1,5:1))
 }
 \references{
-Hardebeck and Hauksson (2001): \url{http://dx.doi.org/10.1029/2001JB000292}
+Hardebeck and Hauksson (2001): \url{https://doi.org/10.1029/2001JB000292}
 }
