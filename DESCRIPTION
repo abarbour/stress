@@ -1,8 +1,8 @@
 Package: stress
 Type: Package
 Title: Tools for Working with Stresses and Focal-mechanism Inversions
-Version: 0.0.9999
-Date: 2016-11-30
+Version: 0.1.9999
+Date: 2018-04-16
 Author: Andrew J Barbour
 Maintainer: Andrew J Barbour <andy.barbour@gmail.com>
 Description: Tools for working with stress and strain tensors

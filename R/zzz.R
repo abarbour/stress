@@ -17,10 +17,9 @@
 # executed after .onLoad is executed, once the namespace is visible to user
 .onAttach <- function(...) {
   pack <- 'stress'
-  ##
+  packv <- utils::packageVersion(pack)
   packageStartupMessage(
-    sprintf("Loaded %s (%s) -- wroking with stresses and stress-inversion tools", pack, utils::packageVersion(pack))
-    )
-  ## options which can be reset by the user
-  options(deform.ops=list())
+    sprintf("Loaded %s (%s) -- stress and stress-inversion/simulation tools", pack, packv)
+  )
+  options(stress.ops=list())
 }
