@@ -5,8 +5,8 @@
 \title{Stereonet representation of trend and plunge}
 \usage{
 TP(ang.trend, ang.plunge, r = NULL, add = FALSE, pt.pch = 16,
-  pt.col = "black", pt.cex = 0.8, relpos = c(0, 0), dressing = TRUE,
-  markers = TRUE, ...)
+  pt.col = "black", pt.cex = 0.8, relpos = c(0, 0),
+  dressing = TRUE, markers = TRUE, ...)
 }
 \arguments{
 \item{ang.trend}{numeric; trend or azimuth}

@@ -37,6 +37,14 @@ shear_to_youngs <- function(mu, nu=0.25){
 
 #' @rdname youngs-mod
 #' @export
+shear_to_lambda <- function(mu, nu=0.25){
+  # Shear modulus to Lame first constant, for a given Poisson's ratio
+  # see {}
+  .NotYetImplemented()
+}
+
+#' @rdname youngs-mod
+#' @export
 bulk_to_youngs <- function(kap, nu=0.25){
   # Bulk modulus to Youngs modulus, for a given Poisson's ratio
   # see 
@@ -53,6 +61,41 @@ shear_to_bulk <- function(mu, nu=0.25){
 #' @export
 bulk_to_shear <- function(kap, nu=0.25){
   bulk_to_youngs(kap, nu) / shear_to_youngs(1, nu)
+}
+
+#' Calculate elastic properties from a velocity model
+#'
+#' @param vp numeric; the P-wave speed [m/s]
+#' @param vs numeric; the S-wave speed [m/s]
+#' @param rho numeric; the density [kg/m^3]
+#' @param ... additional parameters (e.g., passing \code{nu})
+#'
+#' @return bulk modulus, shear modulus, Lame's first constant;
+#' in Pa if SI given for inputs
+#' @export
+#'
+#' @examples
+#' # inputs in m/s and kg/m^3 give results in Pascal
+#' Pa <- seismic_elasticity(7200, 3500, 2650)
+#' 
+#' # use km/s and g/cm^3 instead to get giga-Pascal
+#' GPa <- seismic_elasticity(7.2, 3.5, 2.65)
+#' all.equal(Pa/1e9, GPa)
+seismic_elasticity <- function(vp, vs, rho){
+  vsq <- vs^2
+  vpq <- vp^2
+  # Shear modulus (Lame's second constant)
+  mu <- rho * vsq
+  # Bulk modulus
+  kap <- rho * (vpq - 4 * vsq / 3)
+  # Lame's first constant
+  lam <- (3 * kap - 2 * mu) / 3
+  lam2 <- rho * (vpq - 2 * vsq)
+  stopifnot(all.equal(lam, lam2))
+  # Poisson's ratio
+  L <- lam / rho
+  nu <- L/(L + 2 * vp) # [ ] check this -- seems wrong
+  c(nu = nu, lambda = lam, mu = mu, kappa = kap)
 }
 
 #' Calculate the isotropic elasticity tensor using Hooke's law of elasticity

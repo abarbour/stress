@@ -3,12 +3,15 @@
 \name{youngs-mod}
 \alias{youngs-mod}
 \alias{shear_to_youngs}
+\alias{shear_to_lambda}
 \alias{bulk_to_youngs}
 \alias{shear_to_bulk}
 \alias{bulk_to_shear}
 \title{Young's modulus and elastic constants}
 \usage{
 shear_to_youngs(mu, nu = 0.25)
+
+shear_to_lambda(mu, nu = 0.25)
 
 bulk_to_youngs(kap, nu = 0.25)
 
@@ -22,6 +25,9 @@ bulk_to_shear(kap, nu = 0.25)
 \item{nu}{numeric; the Poisson's ratio}
 
 \item{kap}{numeric; the elastic bulk modulus}
+}
+\description{
+Young's modulus and elastic constants
 }
 \examples{
 

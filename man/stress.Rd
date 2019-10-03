@@ -5,6 +5,9 @@
 \alias{stress}
 \alias{stress-package}
 \title{The \code{stress} package: working with stress inversion results}
+\description{
+The \code{stress} package: working with stress inversion results
+}
 \seealso{
 \code{\link{msatsi-methods}}
 }
